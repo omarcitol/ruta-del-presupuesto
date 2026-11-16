@@ -36,7 +36,7 @@ const Color White = {255, 255, 250, 255};
 Font GameFont = {};
 #endif
 
-void DrawText(const char *text, int x, int y, int fontSize, Color color)
+void DrawGameText(const char *text, int x, int y, int fontSize, Color color)
 {
 #if defined(PLATFORM_WEB)
     if (GameFont.texture.id != 0)
@@ -414,7 +414,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
         const float x = coin.position.x - cameraX;
         DrawCircle(static_cast<int>(x), static_cast<int>(coin.position.y), 13, Gold);
         DrawCircleLines(static_cast<int>(x), static_cast<int>(coin.position.y), 13, Red);
-        DrawText("$", static_cast<int>(x - 5), static_cast<int>(coin.position.y - 8), 16, DeepBlue);
+        DrawGameText("$", static_cast<int>(x - 5), static_cast<int>(coin.position.y - 8), 16, DeepBlue);
     }
 
     for (const PowerUp &powerUp : powerUps)
@@ -431,7 +431,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
             DrawCircle(static_cast<int>(position.x), static_cast<int>(position.y + 2), 14, LeafGreen);
             DrawEllipse(static_cast<int>(position.x - 6), static_cast<int>(position.y - 8), 8, 5, Gold);
             DrawEllipse(static_cast<int>(position.x + 7), static_cast<int>(position.y - 7), 7, 5, BrightRed);
-            DrawText("+", static_cast<int>(position.x - 5), static_cast<int>(position.y - 6), 15, White);
+            DrawGameText("+", static_cast<int>(position.x - 5), static_cast<int>(position.y - 6), 15, White);
         }
     }
 
@@ -447,7 +447,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
         DrawCircle(static_cast<int>(x + 24), static_cast<int>(enemy.bounds.y + 15), 3, White);
         DrawCircle(static_cast<int>(x + 11), static_cast<int>(enemy.bounds.y + 15), 1, Ink);
         DrawCircle(static_cast<int>(x + 24), static_cast<int>(enemy.bounds.y + 15), 1, Ink);
-        DrawText("$", static_cast<int>(x + 12), static_cast<int>(enemy.bounds.y + 21), 12, Paper);
+        DrawGameText("$", static_cast<int>(x + 12), static_cast<int>(enemy.bounds.y + 21), 12, Paper);
     }
 
     if (nextDecision < static_cast<int>(Decisions.size()))
@@ -457,7 +457,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
         DrawRectangleRounded({x - 34, 378, 68, 87}, 0.15f, 7, Paper);
         DrawRectangle(static_cast<int>(x - 4), 398, 8, 44, Red);
         DrawCircle(static_cast<int>(x), 389, 8, Gold);
-        DrawText("?", static_cast<int>(x - 4), 382, 14, DeepBlue);
+        DrawGameText("?", static_cast<int>(x - 4), 382, 14, DeepBlue);
     }
 
     const float vaultX = WorldWidth - 180.0f - cameraX;
@@ -465,7 +465,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
     DrawRectangleRounded({vaultX + 13, 404, 82, 82}, 0.2f, 8, Gold);
     DrawCircleLines(static_cast<int>(vaultX + 54), 445, 27, DeepBlue);
     DrawCircle(static_cast<int>(vaultX + 54), 445, 7, Red);
-    DrawText("META", static_cast<int>(vaultX + 26), 365, 16, DeepBlue);
+    DrawGameText("META", static_cast<int>(vaultX + 26), 365, 16, DeepBlue);
 }
 
 void DrawPlayer(Rectangle player, bool facingRight, float walkTime, bool shielded)
@@ -500,19 +500,19 @@ void DrawHud(int balance, int savings, int progress, int score, int bestScore,
              bool soundAvailable)
 {
     DrawRectangle(0, 0, ScreenWidth, 76, Color{255, 249, 226, 245});
-    DrawText("RUTA DEL PRESUPUESTO", 18, 12, 19, DeepBlue);
-    DrawText(TextFormat("NIVEL %d/3  %s", level + 1, StageNames[level]), 18, 43, 14, Red);
+    DrawGameText("RUTA DEL PRESUPUESTO", 18, 12, 19, DeepBlue);
+    DrawGameText(TextFormat("NIVEL %d/3  %s", level + 1, StageNames[level]), 18, 43, 14, Red);
     if (balance < 0)
-        DrawText(TextFormat("DEUDA $%d", -balance), 290, 12, 16, Red);
+        DrawGameText(TextFormat("DEUDA $%d", -balance), 290, 12, 16, Red);
     else
-        DrawText(TextFormat("SALDO $%d", balance), 290, 12, 16, Ink);
-    DrawText(TextFormat("AHORRO $%d/6000", savings), 290, 42, 14, LeafGreen);
-    DrawText(TextFormat("PUNTOS %06d", score), 500, 12, 16, DeepBlue);
-    DrawText(TextFormat("RECORD %06d", bestScore), 500, 42, 14, Muted);
-    DrawText(TextFormat("TIEMPO %03d", static_cast<int>(timeLeft)), 720, 12, 16, Red);
-    DrawText(TextFormat("VIDAS %d   SEMILLAS %d", lives, ammo), 720, 42, 14, Ink);
-    DrawText(TextFormat("%d/6", progress), 918, 15, 16, DeepBlue);
-    DrawText(!soundAvailable ? "SIN AUDIO" : (muted ? "MUDO [M]" : "AUDIO [M]"),
+        DrawGameText(TextFormat("SALDO $%d", balance), 290, 12, 16, Ink);
+    DrawGameText(TextFormat("AHORRO $%d/6000", savings), 290, 42, 14, LeafGreen);
+    DrawGameText(TextFormat("PUNTOS %06d", score), 500, 12, 16, DeepBlue);
+    DrawGameText(TextFormat("RECORD %06d", bestScore), 500, 42, 14, Muted);
+    DrawGameText(TextFormat("TIEMPO %03d", static_cast<int>(timeLeft)), 720, 12, 16, Red);
+    DrawGameText(TextFormat("VIDAS %d   SEMILLAS %d", lives, ammo), 720, 42, 14, Ink);
+    DrawGameText(TextFormat("%d/6", progress), 918, 15, 16, DeepBlue);
+    DrawGameText(!soundAvailable ? "SIN AUDIO" : (muted ? "MUDO [M]" : "AUDIO [M]"),
              900, 45, 12, Muted);
 }
 
@@ -522,13 +522,13 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
     DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 185});
     DrawRectangleRounded({135, 112, 730, 386}, 0.05f, 12, Paper);
     DrawRectangle(135, 112, 730, 12, Red);
-    DrawText(decision.title, 180, 145, 18, Red);
-    DrawText(decision.question, 180, 179, 26, Ink);
+    DrawGameText(decision.title, 180, 145, 18, Red);
+    DrawGameText(decision.question, 180, 179, 26, Ink);
     if (balance < 0)
-        DrawText(TextFormat("DEUDA $%d     AHORRO $%d     PUNTOS %d", -balance, savings, score),
+        DrawGameText(TextFormat("DEUDA $%d     AHORRO $%d     PUNTOS %d", -balance, savings, score),
                  180, 219, 16, Muted);
     else
-        DrawText(TextFormat("SALDO $%d     AHORRO $%d     PUNTOS %d", balance, savings, score),
+        DrawGameText(TextFormat("SALDO $%d     AHORRO $%d     PUNTOS %d", balance, savings, score),
                  180, 219, 16, Muted);
 
     for (int i = 0; i < 2; ++i)
@@ -539,10 +539,10 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
         DrawRectangleRounded(optionBounds, 0.15f, 8, choiceColor);
         if (hovered) DrawRectangleLinesEx(optionBounds, 3, DeepBlue);
         DrawCircle(198, static_cast<int>(optionBounds.y + 30), 15, i == 0 ? LeafGreen : Red);
-        DrawText(TextFormat("%d", i + 1), 193, static_cast<int>(optionBounds.y + 18), 17, White);
-        DrawText(decision.options[i], 232, static_cast<int>(optionBounds.y + 18), 18, Ink);
+        DrawGameText(TextFormat("%d", i + 1), 193, static_cast<int>(optionBounds.y + 18), 17, White);
+        DrawGameText(decision.options[i], 232, static_cast<int>(optionBounds.y + 18), 18, Ink);
     }
-    DrawText("Haz clic en una opcion o pulsa 1 / 2. La respuesta se aplica al instante.",
+    DrawGameText("Haz clic en una opcion o pulsa 1 / 2. La respuesta se aplica al instante.",
              180, 438, 15, Muted);
 }
 
@@ -553,17 +553,17 @@ void DrawFeedback(int index, int choice, int balanceChange, int savingsChange)
     DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 195});
     DrawRectangleRounded({175, 188, 650, 235}, 0.05f, 12, Paper);
     DrawRectangle(175, 188, 650, 12, risky ? Red : LeafGreen);
-    DrawText(risky ? "CONSECUENCIA / ALERTA" : "CONSECUENCIA / BUENA JUGADA",
+    DrawGameText(risky ? "CONSECUENCIA / ALERTA" : "CONSECUENCIA / BUENA JUGADA",
              220, 222, 18, risky ? Red : LeafGreen);
-    DrawText(decision.feedback[choice], 220, 266, 18, Ink);
-    DrawText(TextFormat("Saldo: %s$%d     Ahorro: %s$%d",
+    DrawGameText(decision.feedback[choice], 220, 266, 18, Ink);
+    DrawGameText(TextFormat("Saldo: %s$%d     Ahorro: %s$%d",
                         balanceChange < 0 ? "-" : "+", std::abs(balanceChange),
                         savingsChange < 0 ? "-" : "+", std::abs(savingsChange)),
              220, 304, 16, DeepBlue);
     if (risky)
-        DrawText("Aparecio una factura perseguidora. Salta o usa una semilla.",
+        DrawGameText("Aparecio una factura perseguidora. Salta o usa una semilla.",
                  220, 340, 15, Red);
-    DrawText("Presiona ENTER para seguir la ruta", 220, 385, 16, Muted);
+    DrawGameText("Presiona ENTER para seguir la ruta", 220, 385, 16, Muted);
 }
 
 void DrawMessagePanel(const char *label, const char *title, const char *detail, int score)
@@ -571,11 +571,11 @@ void DrawMessagePanel(const char *label, const char *title, const char *detail, 
     DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 190});
     DrawRectangleRounded({175, 148, 650, 300}, 0.06f, 14, Paper);
     DrawRectangle(175, 148, 650, 12, Gold);
-    DrawText(label, 225, 188, 18, Red);
-    DrawText(title, 225, 229, 36, DeepBlue);
-    DrawText(detail, 225, 285, 18, Ink);
-    DrawText(TextFormat("PUNTUACION: %06d", score), 225, 334, 22, LeafGreen);
-    DrawText("Presiona ENTER para continuar", 225, 391, 16, Muted);
+    DrawGameText(label, 225, 188, 18, Red);
+    DrawGameText(title, 225, 229, 36, DeepBlue);
+    DrawGameText(detail, 225, 285, 18, Ink);
+    DrawGameText(TextFormat("PUNTUACION: %06d", score), 225, 334, 22, LeafGreen);
+    DrawGameText("Presiona ENTER para continuar", 225, 391, 16, Muted);
 }
 
 } // namespace
@@ -1119,31 +1119,31 @@ int main()
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 120});
             DrawRectangleRounded({120, 92, 760, 440}, 0.05f, 14, Paper);
             DrawRectangle(120, 92, 760, 14, Red);
-            DrawText("AVENTURA DE PLATAFORMAS / FINANZAS PERSONALES", 165, 128, 16, Red);
-            DrawText("Ruta del", 165, 166, 48, DeepBlue);
-            DrawText("presupuesto", 165, 215, 48, DeepBlue);
-            DrawText("Tres niveles. Cada decision deja una consecuencia.", 165, 283, 19, Ink);
-            DrawText("Monedas, deudas perseguidoras, escaleras y una meta final.", 165, 317, 16, Muted);
-            DrawText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
+            DrawGameText("AVENTURA DE PLATAFORMAS / FINANZAS PERSONALES", 165, 128, 16, Red);
+            DrawGameText("Ruta del", 165, 166, 48, DeepBlue);
+            DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
+            DrawGameText("Tres niveles. Cada decision deja una consecuencia.", 165, 283, 19, Ink);
+            DrawGameText("Monedas, deudas perseguidoras, escaleras y una meta final.", 165, 317, 16, Muted);
+            DrawGameText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
             const float difficultyCardWidth = 210.0f;
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
             {
                 const float x = 165.0f + i * (difficultyCardWidth + 12.0f);
                 DrawRectangleRounded({x, 374, difficultyCardWidth, 38}, 0.16f, 7,
                                      i == selectedDifficulty ? DeepBlue : Color{231, 234, 224, 255});
-                DrawText(TextFormat("%d  %s  /  JUGAR", i + 1, Difficulties[i].name),
+                DrawGameText(TextFormat("%d  %s  /  JUGAR", i + 1, Difficulties[i].name),
                          static_cast<int>(x + 16), 385, 15,
                          i == selectedDifficulty ? White : Ink);
             }
-            DrawText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
+            DrawGameText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
-            DrawText("JUGAR  /  ESPACIO", 184, 456, 15, White);
-            DrawText("Mover A/D  Saltar ESPACIO  Escalar W/S  Pausa P",
+            DrawGameText("JUGAR  /  ESPACIO", 184, 456, 15, White);
+            DrawGameText("Mover A/D  Saltar ESPACIO  Escalar W/S  Pausa P",
                      165, 491, 13, Ink);
-            DrawText(TextFormat("Semillas X  Sonido M  Record local: %06d", bestScore),
+            DrawGameText(TextFormat("Semillas X  Sonido M  Record local: %06d", bestScore),
                      165, 508, 12, Blue);
             if (records.storageError)
-                DrawText("No se pudo guardar datos en este equipo.", 650, 508, 12, Red);
+                DrawGameText("No se pudo guardar datos en este equipo.", 650, 508, 12, Red);
         }
         else if (screen == Screen::Decision)
         {
@@ -1162,30 +1162,30 @@ int main()
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 185});
             DrawRectangleRounded({250, 210, 500, 170}, 0.06f, 14, Paper);
             DrawRectangle(250, 210, 500, 12, Gold);
-            DrawText("PAUSA", 305, 255, 36, DeepBlue);
-            DrawText(TextFormat("%s  /  %s", StageNames[level],
+            DrawGameText("PAUSA", 305, 255, 36, DeepBlue);
+            DrawGameText(TextFormat("%s  /  %s", StageNames[level],
                                 Difficulties[selectedDifficulty].name),
                      305, 304, 17, Ink);
-            DrawText("Presiona P para continuar", 305, 344, 16, Muted);
+            DrawGameText("Presiona P para continuar", 305, 344, 16, Muted);
         }
         else if (screen == Screen::Finished)
         {
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 195});
             DrawRectangleRounded({150, 112, 700, 380}, 0.05f, 14, Paper);
             DrawRectangle(150, 112, 700, 13, Gold);
-            DrawText("META ALCANZADA / FONDO FUTURO", 205, 150, 18, LeafGreen);
-            DrawText("Tu plan llego", 205, 192, 40, DeepBlue);
-            DrawText("mas lejos que la deuda.", 205, 235, 40, DeepBlue);
+            DrawGameText("META ALCANZADA / FONDO FUTURO", 205, 150, 18, LeafGreen);
+            DrawGameText("Tu plan llego", 205, 192, 40, DeepBlue);
+            DrawGameText("mas lejos que la deuda.", 205, 235, 40, DeepBlue);
             if (balance < 0)
-                DrawText(TextFormat("Deuda final: $%d      Ahorro: $%d", -balance, savings),
+                DrawGameText(TextFormat("Deuda final: $%d      Ahorro: $%d", -balance, savings),
                          205, 302, 20, Ink);
             else
-                DrawText(TextFormat("Saldo final: $%d      Ahorro: $%d", balance, savings),
+                DrawGameText(TextFormat("Saldo final: $%d      Ahorro: $%d", balance, savings),
                          205, 302, 20, Ink);
-            DrawText(TextFormat("Puntos: %06d     Tiempo restante: %d s", score,
+            DrawGameText(TextFormat("Puntos: %06d     Tiempo restante: %d s", score,
                                 static_cast<int>(remainingTime)), 205, 340, 18, Blue);
-            DrawText(TextFormat("Record local: %06d", bestScore), 205, 373, 17, Red);
-            DrawText("ENTER para calificar la experiencia", 205, 427, 16, Muted);
+            DrawGameText(TextFormat("Record local: %06d", bestScore), 205, 373, 17, Red);
+            DrawGameText("ENTER para calificar la experiencia", 205, 427, 16, Muted);
         }
         else if (screen == Screen::GameOver)
         {
@@ -1198,23 +1198,23 @@ int main()
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 190});
             DrawRectangleRounded({190, 150, 620, 300}, 0.05f, 14, Paper);
             DrawRectangle(190, 150, 620, 12, Gold);
-            DrawText("CALIFICA LA EXPERIENCIA", 240, 191, 20, Red);
+            DrawGameText("CALIFICA LA EXPERIENCIA", 240, 191, 20, Red);
             if (submittedRating == 0)
             {
-                DrawText("Que tan entretenida fue la aventura?", 240, 240, 22, DeepBlue);
-                DrawText("1-5 para calificar; ENTER para omitir. Es anonima.", 240, 286, 16, Ink);
-                DrawText("1   2   3   4   5", 240, 333, 30, Gold);
+                DrawGameText("Que tan entretenida fue la aventura?", 240, 240, 22, DeepBlue);
+                DrawGameText("1-5 para calificar; ENTER para omitir. Es anonima.", 240, 286, 16, Ink);
+                DrawGameText("1   2   3   4   5", 240, 333, 30, Gold);
             }
             else
             {
-                DrawText("Gracias por valorar el prototipo.", 240, 240, 22, DeepBlue);
-                DrawText(TextFormat("Respuestas en este equipo: %d", ratingCount), 240, 289, 17, Ink);
-                DrawText(TextFormat("Promedio: %.1f / 5",
+                DrawGameText("Gracias por valorar el prototipo.", 240, 240, 22, DeepBlue);
+                DrawGameText(TextFormat("Respuestas en este equipo: %d", ratingCount), 240, 289, 17, Ink);
+                DrawGameText(TextFormat("Promedio: %.1f / 5",
                                     ratingCount > 0 ? static_cast<float>(ratingTotal) / ratingCount : 0.0f),
                          240, 323, 19, LeafGreen);
                 if (records.storageError)
-                    DrawText("No se pudo actualizar el archivo de resultados.", 240, 350, 13, Red);
-                DrawText("ENTER para volver al inicio", 240, 377, 16, Muted);
+                    DrawGameText("No se pudo actualizar el archivo de resultados.", 240, 350, 13, Red);
+                DrawGameText("ENTER para volver al inicio", 240, 377, 16, Muted);
             }
         }
         EndDrawing();
