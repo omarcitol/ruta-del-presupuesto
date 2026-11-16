@@ -54,11 +54,13 @@ set RAYLIB_DIR=C:\path\to\raylib-5.5
 build.bat
 ```
 
-## Browser build
+## Play in the browser
 
-Emscripten and raylib can be used to prepare a WebAssembly build with
-`build-web.bat`. The browser build, full browser playthrough, and public
-deployment have not yet been validated. Serve a completed `build\web` directory
-over HTTP; opening its HTML directly as a file may prevent the browser from
-loading WebAssembly. GitHub Actions builds the browser version and deploys it to
-GitHub Pages after pushes to `main`.
+Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Press `Space` on the
+title screen to start. The public build has been verified to load and start a
+game in the browser; a full playthrough has not yet been manually tested.
+
+GitHub Actions builds the WebAssembly version with raylib 5.5 and Emscripten
+3.1.64, then deploys it to GitHub Pages after pushes to `main`. For a local
+build, `build-web.bat` is available; serve the resulting `build\web` directory
+over HTTP rather than opening its HTML file directly.
