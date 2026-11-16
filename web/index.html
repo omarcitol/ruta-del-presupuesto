@@ -15,13 +15,16 @@
       background: #101e35;
     }
     body {
-      display: grid;
-      place-items: center;
+      position: relative;
     }
     #game-shell {
-      position: relative;
-      width: min(100vw, 166.6667vh);
-      aspect-ratio: 5 / 3;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1000px;
+      height: 600px;
+      transform: translate(-50%, -50%) scale(var(--game-scale, 1));
+      transform-origin: center;
       overflow: hidden;
       background: #78c9f3;
     }
@@ -53,6 +56,13 @@
   <script>
     const canvas = document.getElementById("canvas");
     const loading = document.getElementById("loading");
+    const gameShell = document.getElementById("game-shell");
+    const fitGame = () => {
+      const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 600);
+      gameShell.style.setProperty("--game-scale", scale);
+    };
+    fitGame();
+    window.addEventListener("resize", fitGame);
     var Module = {
       canvas,
       print: (...args) => console.log(...args),
