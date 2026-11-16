@@ -60,4 +60,5 @@ Emscripten and raylib can be used to prepare a WebAssembly build with
 `build-web.bat`. The browser build, full browser playthrough, and public
 deployment have not yet been validated. Serve a completed `build\web` directory
 over HTTP; opening its HTML directly as a file may prevent the browser from
-loading WebAssembly. GitHub Pages has not been configured.
+loading WebAssembly. GitHub Actions builds the browser version and deploys it to
+GitHub Pages after pushes to `main`.
