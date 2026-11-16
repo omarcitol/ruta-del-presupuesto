@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101e35">
+  <title>Ruta del presupuesto</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #101e35;
+    }
+    body {
+      display: grid;
+      place-items: center;
+    }
+    #game-shell {
+      position: relative;
+      width: min(100vw, 166.6667vh);
+      aspect-ratio: 5 / 3;
+      overflow: hidden;
+      background: #78c9f3;
+    }
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+    }
+    #loading {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      color: #fff9e2;
+      font: 600 1rem/1.5 system-ui, sans-serif;
+      background: #101e35;
+    }
+    #loading[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main id="game-shell" aria-label="Videojuego Ruta del presupuesto">
+    <div id="loading" role="status">Cargando el juego...</div>
+    <canvas id="canvas" width="1000" height="600" tabindex="0"></canvas>
+  </main>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const loading = document.getElementById("loading");
+    var Module = {
+      canvas,
+      print: (...args) => console.log(...args),
+      printErr: (...args) => console.error(...args),
+      setStatus: (message) => {
+        if (message) loading.textContent = message;
+      },
+      monitorRunDependencies: (remaining) => {
+        if (remaining > 0) loading.textContent = "Preparando el juego...";
+      },
+      onRuntimeInitialized: () => {
+        loading.hidden = true;
+        canvas.focus({ preventScroll: true });
+      }
+    };
+    canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }));
+  </script>
+  <script async src="game.js"></script>
+</body>
+</html>

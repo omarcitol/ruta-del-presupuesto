@@ -35,7 +35,9 @@ jobs:
             -I"$RUNNER_TEMP/raylib/src" main.cpp -L"$RUNNER_TEMP/raylib/src" -lraylib \
             -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 \
             -sMIN_WEBGL_VERSION=1 -sMAX_WEBGL_VERSION=2 \
-            -o build/web/index.html
+            --preload-file assets/fonts/AtkinsonHyperlegible-Regular.ttf@/fonts/AtkinsonHyperlegible-Regular.ttf \
+            -o build/web/game.js
+          cp web/index.html build/web/index.html
           touch build/web/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3

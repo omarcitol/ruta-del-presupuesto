@@ -50,7 +50,11 @@ em++ -std=c++17 -O2 -Wall -Wextra -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2 ^
     -I"%RAYLIB_DIR%\src" main.cpp -L"%RAYLIB_DIR%\src" -lraylib ^
     -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 ^
     -sMIN_WEBGL_VERSION=1 -sMAX_WEBGL_VERSION=2 ^
-    -o "build\web\index.html"
+    --preload-file "assets\fonts\AtkinsonHyperlegible-Regular.ttf@/fonts/AtkinsonHyperlegible-Regular.ttf" ^
+    -o "build\web\game.js"
+if errorlevel 1 exit /b 1
+
+copy /Y "web\index.html" "build\web\index.html" >nul
 if errorlevel 1 exit /b 1
 
 echo Built build\web\index.html

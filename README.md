@@ -30,11 +30,12 @@ shared online. All money in the game is fictional.
 - Move: `A`/`D` or the left/right arrows
 - Jump: `Space`, `W`, or the up arrow
 - Climb: hold `W`/`S` or the up/down arrows while on a ladder
-- Choose a financial decision: `1` or `2`
+- Choose a financial decision: click an option or press `1`/`2` (applies immediately)
 - Shoot a savings seed: `X` (after collecting one)
 - Pause/resume: `P`
 - Continue: `Enter`
-- Select title-screen difficulty: left/right arrows or `1`-`3`
+- Start a difficulty: click its card or press `1`-`3`; `Space` starts the selected one
+- Select title-screen difficulty: left/right arrows
 - Toggle sound: `M`
 - Close the game: `Esc`
 
@@ -56,9 +57,11 @@ build.bat
 
 ## Play in the browser
 
-Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Press `Space` on the
-title screen to start. The public build has been verified to load and start a
-game in the browser; a full playthrough has not yet been manually tested.
+Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Click a difficulty
+card or press `1`-`3` to start immediately, or press `Space` to start the
+selected difficulty. Decision cards also respond to a click, so no extra
+confirmation key is needed. The web version uses a readable font and a clean,
+responsive full-screen page.
 
 GitHub Actions builds the WebAssembly version with raylib 5.5 and Emscripten
 3.1.64, then deploys it to GitHub Pages after pushes to `main`. For a local

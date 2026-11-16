@@ -32,6 +32,23 @@ const Color Ink = {35, 44, 58, 255};
 const Color Muted = {98, 108, 121, 255};
 const Color White = {255, 255, 250, 255};
 
+#if defined(PLATFORM_WEB)
+Font GameFont = {};
+#endif
+
+void DrawText(const char *text, int x, int y, int fontSize, Color color)
+{
+#if defined(PLATFORM_WEB)
+    if (GameFont.texture.id != 0)
+    {
+        DrawTextEx(GameFont, text, {static_cast<float>(x), static_cast<float>(y)},
+                   static_cast<float>(fontSize), 0.0f, color);
+        return;
+    }
+#endif
+    ::DrawText(text, x, y, fontSize, color);
+}
+
 struct Platform {
     Rectangle bounds;
 };
@@ -113,27 +130,27 @@ const char *const StageLessons[LevelCount] = {
 };
 
 const std::vector<Decision> Decisions = {
-    {490, "1 / INGRESO", "Recibes $12.000. Como te organizas?",
+    {600, "1 / INGRESO", "Recibes $12.000. Como te organizas?",
      {"Apartas $2.000 para tu meta", "Gastas $3.000 en un antojo"},
      {"Buena jugada: tu meta ya tiene un inicio.", "El gusto se disfruta, pero reduce tu margen."},
      {-2000, -3000}, {2000, 0}, {false, true}},
-    {1160, "2 / NECESIDAD", "Tu telefono dejo de funcionar.",
+    {1450, "2 / NECESIDAD", "Tu telefono dejo de funcionar.",
      {"Reparas lo necesario: $2.500", "Compras uno nuevo a credito: $6.000"},
      {"Resuelves la necesidad sin cargar una deuda grande.", "La cuota parece pequena, pero compromete el presupuesto."},
      {-2500, -6000}, {0, 0}, {false, true}},
-    {2490, "3 / TRANSPORTE", "Debes llegar a clases toda la semana.",
+    {2600, "3 / TRANSPORTE", "Debes llegar a clases toda la semana.",
      {"Planificas bus: $900", "Pides taxi cada dia: $2.400"},
      {"Planificar el traslado libera dinero para otras prioridades.", "La comodidad cuesta mas esta semana."},
      {-900, -2400}, {0, 0}, {false, true}},
-    {3160, "4 / OFERTA", "Una tienda ofrece una compra en cuotas.",
+    {3450, "4 / OFERTA", "Una tienda ofrece una compra en cuotas.",
      {"Comparas el costo total antes de decidir", "Aceptas sin revisar intereses: $2.000 extra"},
      {"Comparar condiciones tambien es cuidar tu dinero.", "Sin revisar intereses, el precio final puede sorprenderte."},
      {0, -2000}, {0, 0}, {false, true}},
-    {4490, "5 / IMPREVISTO", "Aparece un gasto medico de $1.500.",
+    {4600, "5 / IMPREVISTO", "Aparece un gasto medico de $1.500.",
      {"Usas el ahorro y cubres lo que falte", "Pides prestado y pagas $300 extra"},
      {"El fondo de emergencia existe para momentos como este.", "La deuda resuelve hoy, pero aumenta el costo."},
      {0, -1800}, {-1500, 0}, {false, true}},
-    {5160, "6 / META", "Quieres reunir $6.000 para estudiar.",
+    {5450, "6 / META", "Quieres reunir $6.000 para estudiar.",
      {"Proteges el ahorro y revisas tu avance", "Usas $2.000 del ahorro para un gusto"},
      {"Llegaste con un plan y el ahorro queda protegido.", "La meta se aleja; puedes intentarlo de nuevo con otro plan."},
      {0, 0}, {0, -2000}, {false, true}}
@@ -317,7 +334,7 @@ void DrawBackdrop(float cameraX, int level)
     }
 }
 
-void DrawWorld(float cameraX, const std::vector<Coin> &coins,
+void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
                const std::vector<PowerUp> &powerUps, const std::vector<Enemy> &enemies)
 {
     const Color groundColors[LevelCount] = {
@@ -433,8 +450,9 @@ void DrawWorld(float cameraX, const std::vector<Coin> &coins,
         DrawText("$", static_cast<int>(x + 12), static_cast<int>(enemy.bounds.y + 21), 12, Paper);
     }
 
-    for (const Decision &decision : Decisions)
+    if (nextDecision < static_cast<int>(Decisions.size()))
     {
+        const Decision &decision = Decisions[nextDecision];
         const float x = decision.x - cameraX;
         DrawRectangleRounded({x - 34, 378, 68, 87}, 0.15f, 7, Paper);
         DrawRectangle(static_cast<int>(x - 4), 398, 8, 44, Red);
@@ -505,7 +523,7 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
     DrawRectangleRounded({135, 112, 730, 386}, 0.05f, 12, Paper);
     DrawRectangle(135, 112, 730, 12, Red);
     DrawText(decision.title, 180, 145, 18, Red);
-    DrawText(decision.question, 180, 179, 24, Ink);
+    DrawText(decision.question, 180, 179, 26, Ink);
     if (balance < 0)
         DrawText(TextFormat("DEUDA $%d     AHORRO $%d     PUNTOS %d", -balance, savings, score),
                  180, 219, 16, Muted);
@@ -515,14 +533,17 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
 
     for (int i = 0; i < 2; ++i)
     {
-        const int y = 270 + i * 69;
+        const Rectangle optionBounds = {170, static_cast<float>(264 + i * 82), 660, 60};
+        const bool hovered = CheckCollisionPointRec(GetMousePosition(), optionBounds);
         const Color choiceColor = i == 0 ? Color{214, 239, 195, 255} : Color{255, 223, 198, 255};
-        DrawRectangleRounded({170, static_cast<float>(y), 660, 50}, 0.15f, 8, choiceColor);
-        DrawCircle(static_cast<int>(195), y + 25, 14, i == 0 ? LeafGreen : Red);
-        DrawText(TextFormat("%d", i + 1), 190, y + 16, 17, White);
-        DrawText(decision.options[i], 224, y + 17, 16, Ink);
+        DrawRectangleRounded(optionBounds, 0.15f, 8, choiceColor);
+        if (hovered) DrawRectangleLinesEx(optionBounds, 3, DeepBlue);
+        DrawCircle(198, static_cast<int>(optionBounds.y + 30), 15, i == 0 ? LeafGreen : Red);
+        DrawText(TextFormat("%d", i + 1), 193, static_cast<int>(optionBounds.y + 18), 17, White);
+        DrawText(decision.options[i], 232, static_cast<int>(optionBounds.y + 18), 18, Ink);
     }
-    DrawText("Elige con 1 o 2. Una decision riesgosa puede atraer deudas.", 180, 438, 15, Muted);
+    DrawText("Haz clic en una opcion o pulsa 1 / 2. La respuesta se aplica al instante.",
+             180, 438, 15, Muted);
 }
 
 void DrawFeedback(int index, int choice, int balanceChange, int savingsChange)
@@ -564,6 +585,20 @@ int main()
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(ScreenWidth, ScreenHeight, "Ruta del presupuesto");
     SetTargetFPS(60);
+
+#if defined(PLATFORM_WEB)
+    std::vector<int> fontCodepoints;
+    for (int codepoint = 32; codepoint <= 126; ++codepoint)
+        fontCodepoints.push_back(codepoint);
+    for (int codepoint = 160; codepoint <= 255; ++codepoint)
+        fontCodepoints.push_back(codepoint);
+    GameFont = LoadFontEx("/fonts/AtkinsonHyperlegible-Regular.ttf", 48,
+                          fontCodepoints.data(), static_cast<int>(fontCodepoints.size()));
+    if (GameFont.texture.id == 0)
+        TraceLog(LOG_WARNING, "Could not load the browser font; using raylib's default font.");
+    else
+        SetTextureFilter(GameFont.texture, TEXTURE_FILTER_BILINEAR);
+#endif
 
     InitAudioDevice();
     const bool audioAvailable = IsAudioDeviceReady();
@@ -695,10 +730,26 @@ int main()
             if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D))
                 selectedDifficulty = std::min(static_cast<int>(std::size(Difficulties)) - 1,
                                               selectedDifficulty + 1);
+            const Vector2 mouse = GetMousePosition();
+            bool startGame = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) ||
+                (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                 CheckCollisionPointRec(mouse, {165, 443, 248, 42}));
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
+            {
                 if (IsKeyPressed(static_cast<KeyboardKey>(KEY_ONE + i)))
+                {
                     selectedDifficulty = i;
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
+                    startGame = true;
+                }
+                const Rectangle bounds = {165.0f + i * 222.0f, 374, 210, 38};
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                    CheckCollisionPointRec(mouse, bounds))
+                {
+                    selectedDifficulty = i;
+                    startGame = true;
+                }
+            }
+            if (startGame)
             {
                 resetRun();
                 screen = Screen::Playing;
@@ -943,6 +994,19 @@ int main()
         {
             if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_KP_1)) selectedOption = 0;
             if (IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_KP_2)) selectedOption = 1;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            {
+                const Vector2 mouse = GetMousePosition();
+                for (int i = 0; i < 2; ++i)
+                {
+                    const Rectangle optionBounds = {170, static_cast<float>(264 + i * 82), 660, 60};
+                    if (CheckCollisionPointRec(mouse, optionBounds))
+                    {
+                        selectedOption = i;
+                        break;
+                    }
+                }
+            }
             if (selectedOption >= 0)
             {
                 const Decision &decision = Decisions[activeDecision];
@@ -1034,7 +1098,7 @@ int main()
 
         BeginDrawing();
         DrawBackdrop(cameraX, level);
-        DrawWorld(cameraX, coins, powerUps, enemies);
+        DrawWorld(cameraX, nextDecision, coins, powerUps, enemies);
         for (const Projectile &projectile : projectiles)
         {
             if (!projectile.alive) continue;
@@ -1060,20 +1124,20 @@ int main()
             DrawText("presupuesto", 165, 215, 48, DeepBlue);
             DrawText("Tres niveles. Cada decision deja una consecuencia.", 165, 283, 19, Ink);
             DrawText("Monedas, deudas perseguidoras, escaleras y una meta final.", 165, 317, 16, Muted);
-            DrawText("DIFICULTAD  (FLECHAS o teclas 1-3)", 165, 350, 14, Red);
+            DrawText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
             const float difficultyCardWidth = 210.0f;
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
             {
                 const float x = 165.0f + i * (difficultyCardWidth + 12.0f);
                 DrawRectangleRounded({x, 374, difficultyCardWidth, 38}, 0.16f, 7,
                                      i == selectedDifficulty ? DeepBlue : Color{231, 234, 224, 255});
-                DrawText(TextFormat("%d  %s", i + 1, Difficulties[i].name),
+                DrawText(TextFormat("%d  %s  /  JUGAR", i + 1, Difficulties[i].name),
                          static_cast<int>(x + 16), 385, 15,
                          i == selectedDifficulty ? White : Ink);
             }
             DrawText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
-            DrawText("ENTER / ESPACIO: JUGAR", 184, 456, 15, White);
+            DrawText("JUGAR  /  ESPACIO", 184, 456, 15, White);
             DrawText("Mover A/D  Saltar ESPACIO  Escalar W/S  Pausa P",
                      165, 491, 13, Ink);
             DrawText(TextFormat("Semillas X  Sonido M  Record local: %06d", bestScore),
