@@ -15,7 +15,8 @@ fire.
 
 Choose Tranquilo, Aventura, or Reto at the title screen with the left/right
 arrows or `1`-`3`. The modes change the starting lives, time limit, and enemy
-speed; later stages also introduce faster enemies. Press `P` to pause.
+speed; enemies get faster in each stage. A hit costs 250 points and 18 seconds,
+and losing all lives or running out of time ends the run. Press `P` to pause.
 
 The score rewards careful choices, coins, enemy encounters, and remaining time.
 Collected coins add to the available balance; setting money aside changes the

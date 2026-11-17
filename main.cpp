@@ -114,9 +114,9 @@ struct DifficultySettings {
 };
 
 const DifficultySettings Difficulties[] = {
-    {"TRANQUILO", "210 s / 4 vidas / deudas mas lentas", 210.0f, 4, 0.78f},
-    {"AVENTURA", "180 s / 3 vidas / reto equilibrado", 180.0f, 3, 1.0f},
-    {"RETO", "165 s / 2 vidas / enemigos mas rapidos", 165.0f, 2, 1.22f}
+    {"TRANQUILO", "210 s / 4 vidas / enemigos moderados", 210.0f, 4, 0.85f},
+    {"AVENTURA", "180 s / 3 vidas / enemigos mas veloces", 180.0f, 3, 1.15f},
+    {"RETO", "150 s / 2 vidas / enemigos muy veloces", 150.0f, 2, 1.45f}
 };
 
 const char *const StageNames[LevelCount] = {
@@ -204,17 +204,23 @@ std::vector<PowerUp> MakePowerUps()
 std::vector<Enemy> MakeEnemies(float difficultySpeed)
 {
     return {
-        {{700, GroundY - 30, 34, 30}, 640, 735, 65 * difficultySpeed, true},
-        {{1400, GroundY - 30, 34, 30}, 1340, 1490, 75 * difficultySpeed, true},
-        {{1740, GroundY - 30, 34, 30}, 1680, 1810, 82 * difficultySpeed, true},
-        {{2240, GroundY - 30, 34, 30}, 2160, 2320, 70 * difficultySpeed, true},
-        {{2630, GroundY - 30, 34, 30}, 2560, 2710, 82 * difficultySpeed, true},
-        {{3400, GroundY - 30, 34, 30}, 3330, 3480, 75 * difficultySpeed, true},
-        {{3800, GroundY - 30, 34, 30}, 3730, 3870, 90 * difficultySpeed, true},
-        {{4260, GroundY - 30, 34, 30}, 4180, 4340, 70 * difficultySpeed, true},
-        {{4670, GroundY - 30, 34, 30}, 4600, 4730, 94 * difficultySpeed, true},
-        {{5430, GroundY - 30, 34, 30}, 5360, 5510, 80 * difficultySpeed, true},
-        {{5800, GroundY - 30, 34, 30}, 5740, 5880, 100 * difficultySpeed, true}
+        {{700, GroundY - 30, 34, 30}, 630, 760, 95 * difficultySpeed, true},
+        {{1100, GroundY - 30, 34, 30}, 1050, 1170, 105 * difficultySpeed, true},
+        {{1400, GroundY - 30, 34, 30}, 1330, 1480, 110 * difficultySpeed, true},
+        {{1740, GroundY - 30, 34, 30}, 1670, 1810, 120 * difficultySpeed, true},
+        {{1900, GroundY - 30, 34, 30}, 1850, 1960, 125 * difficultySpeed, true},
+        {{2240, GroundY - 30, 34, 30}, 2160, 2320, 100 * difficultySpeed, true},
+        {{2420, GroundY - 30, 34, 30}, 2370, 2490, 115 * difficultySpeed, true},
+        {{2630, GroundY - 30, 34, 30}, 2560, 2710, 125 * difficultySpeed, true},
+        {{3050, GroundY - 30, 34, 30}, 2990, 3110, 110 * difficultySpeed, true},
+        {{3400, GroundY - 30, 34, 30}, 3320, 3480, 125 * difficultySpeed, true},
+        {{3800, GroundY - 30, 34, 30}, 3720, 3880, 135 * difficultySpeed, true},
+        {{4260, GroundY - 30, 34, 30}, 4180, 4340, 105 * difficultySpeed, true},
+        {{4440, GroundY - 30, 34, 30}, 4390, 4510, 120 * difficultySpeed, true},
+        {{4670, GroundY - 30, 34, 30}, 4590, 4750, 130 * difficultySpeed, true},
+        {{5100, GroundY - 30, 34, 30}, 5040, 5160, 120 * difficultySpeed, true},
+        {{5430, GroundY - 30, 34, 30}, 5350, 5510, 135 * difficultySpeed, true},
+        {{5800, GroundY - 30, 34, 30}, 5730, 5890, 145 * difficultySpeed, true}
     };
 }
 
@@ -699,10 +705,12 @@ int main()
 
     auto loseLife = [&]() {
         --lives;
-        score = std::max(0, score - 150);
+        score = std::max(0, score - 250);
+        remainingTime = std::max(0.0f, remainingTime - 18.0f);
         playSound(hitSound);
-        if (lives <= 0)
+        if (lives <= 0 || remainingTime <= 0.0f)
         {
+            timedOut = lives > 0;
             screen = Screen::GameOver;
             saveRecord();
             return;
@@ -899,7 +907,8 @@ int main()
                     for (Enemy &enemy : enemies)
                     {
                         if (!enemy.alive) continue;
-                        enemy.bounds.x += enemy.speed * delta;
+                        const float stageSpeed = 1.0f + level * 0.18f;
+                        enemy.bounds.x += enemy.speed * stageSpeed * delta;
                         if (enemy.bounds.x >= enemy.patrolEnd || enemy.bounds.x <= enemy.patrolStart)
                         {
                             enemy.speed = -enemy.speed;
@@ -1032,10 +1041,9 @@ int main()
                 if (decision.risky[selectedOption])
                 {
                     const float enemyX = std::min(player.x + 240.0f, WorldWidth - 100.0f);
-                    const float stageSpeed = 1.0f + level * 0.18f;
                     enemies.push_back({{enemyX, GroundY - 30, 34, 30},
                                        enemyX - 60, enemyX + 100,
-                                       -90.0f * Difficulties[selectedDifficulty].enemySpeed * stageSpeed,
+                                       -110.0f * Difficulties[selectedDifficulty].enemySpeed,
                                        true});
                 }
                 screen = Screen::Feedback;
@@ -1190,8 +1198,10 @@ int main()
         else if (screen == Screen::GameOver)
         {
             DrawMessagePanel("PARTIDA TERMINADA",
-                             timedOut ? "Se acabo el tiempo" : "Aun puedes intentarlo",
-                             "La siguiente pantalla te permite valorar la experiencia.", score);
+                             timedOut ? "Se acabo el tiempo" : "Te quedaste sin vidas",
+                             timedOut ? "Cada golpe quita 18 segundos y 250 puntos." :
+                                        "Esquiva, salta o usa semillas para sobrevivir.",
+                             score);
         }
         else if (screen == Screen::Rating)
         {
