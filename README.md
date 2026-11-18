@@ -9,9 +9,12 @@ commercial game franchises.
 Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
 and Mercado de las metas. Each stage has its own palette, platform routes,
 enemies, and financial lesson. Jump across gaps, climb ladders, collect coins,
-and make six decisions about everyday finances. Risky decisions attract debt
-enemies. Avoid them, jump on them, or collect a savings seed and press `X` to
-fire.
+and make six decisions about everyday finances. Some debt enemies throw bills
+and cannons fire money shots; dodge them by jumping or stomp enemies from
+above. Jump into the marked blocks from below to release seeds, then press `X`
+to shoot. Each hit costs one life, $2,000, and 18 seconds. Reaching the vault
+with the most capital (balance plus savings) is the goal; running out of lives
+or money ends the run.
 
 Choose Tranquilo, Aventura, or Reto at the title screen with the left/right
 arrows or `1`-`3`. The modes change the starting lives, time limit, and enemy
@@ -33,6 +36,7 @@ shared online. All money in the game is fictional.
 - Climb: hold `W`/`S` or the up/down arrows while on a ladder
 - Choose a financial decision: click an option or press `1`/`2` (applies immediately)
 - Shoot a savings seed: `X` (after collecting one)
+- Hit a marked block from below: jump into it
 - Pause/resume: `P`
 - Continue: `Enter`
 - Start a difficulty: click its card or press `1`-`3`; `Space` starts the selected one

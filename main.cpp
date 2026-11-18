@@ -71,6 +71,7 @@ struct PowerUp {
     Vector2 position;
     bool collected;
     bool grantsShield;
+    float velocityY = 0.0f;
 };
 
 struct Enemy {
@@ -79,12 +80,30 @@ struct Enemy {
     float patrolEnd;
     float speed;
     bool alive;
+    bool throwsThings = false;
+    float shotCooldown = 2.0f;
 };
 
 struct Projectile {
     Rectangle bounds;
     float speed;
     bool alive;
+};
+
+struct HazardProjectile {
+    Rectangle bounds;
+    float speed;
+    bool alive;
+};
+
+struct QuestionBlock {
+    Rectangle bounds;
+    bool used;
+};
+
+struct Cannon {
+    Rectangle bounds;
+    float shotCooldown;
 };
 
 struct Decision {
@@ -201,9 +220,27 @@ std::vector<PowerUp> MakePowerUps()
     };
 }
 
-std::vector<Enemy> MakeEnemies(float difficultySpeed)
+std::vector<QuestionBlock> MakeQuestionBlocks()
 {
     return {
+        {{390, 350, 42, 38}, false}, {{1170, 355, 42, 38}, false},
+        {{2390, 350, 42, 38}, false}, {{3260, 335, 42, 38}, false},
+        {{4390, 350, 42, 38}, false}, {{5260, 335, 42, 38}, false}
+    };
+}
+
+std::vector<Cannon> MakeCannons()
+{
+    return {
+        {{1100, GroundY - 38, 48, 38}, 1.5f},
+        {{3100, GroundY - 38, 48, 38}, 1.8f},
+        {{5100, GroundY - 38, 48, 38}, 2.1f}
+    };
+}
+
+std::vector<Enemy> MakeEnemies(float difficultySpeed)
+{
+    std::vector<Enemy> enemies = {
         {{700, GroundY - 30, 34, 30}, 630, 760, 95 * difficultySpeed, true},
         {{1100, GroundY - 30, 34, 30}, 1050, 1170, 105 * difficultySpeed, true},
         {{1400, GroundY - 30, 34, 30}, 1330, 1480, 110 * difficultySpeed, true},
@@ -222,6 +259,12 @@ std::vector<Enemy> MakeEnemies(float difficultySpeed)
         {{5430, GroundY - 30, 34, 30}, 5350, 5510, 135 * difficultySpeed, true},
         {{5800, GroundY - 30, 34, 30}, 5730, 5890, 145 * difficultySpeed, true}
     };
+    for (std::size_t i = 2; i < enemies.size(); i += 4)
+    {
+        enemies[i].throwsThings = true;
+        enemies[i].shotCooldown = 1.5f + static_cast<float>(i % 3) * 0.25f;
+    }
+    return enemies;
 }
 
 Sound MakeTone(float frequency, float duration)
@@ -341,7 +384,10 @@ void DrawBackdrop(float cameraX, int level)
 }
 
 void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
-               const std::vector<PowerUp> &powerUps, const std::vector<Enemy> &enemies)
+               const std::vector<PowerUp> &powerUps, const std::vector<Enemy> &enemies,
+               const std::vector<QuestionBlock> &questionBlocks,
+               const std::vector<Cannon> &cannons,
+               const std::vector<HazardProjectile> &hazardProjectiles)
 {
     const Color groundColors[LevelCount] = {
         {89, 163, 91, 255}, {184, 113, 75, 255}, {78, 111, 160, 255}
@@ -439,6 +485,41 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
             DrawEllipse(static_cast<int>(position.x + 7), static_cast<int>(position.y - 7), 7, 5, BrightRed);
             DrawGameText("+", static_cast<int>(position.x - 5), static_cast<int>(position.y - 6), 15, White);
         }
+    }
+
+    for (const QuestionBlock &block : questionBlocks)
+    {
+        const Rectangle visible = {block.bounds.x - cameraX, block.bounds.y,
+                                   block.bounds.width, block.bounds.height};
+        DrawRectangleRounded(visible, 0.12f, 6, block.used ? Muted : Gold);
+        DrawRectangleLinesEx(visible, 3, block.used ? DeepBlue : Red);
+        DrawGameText(block.used ? "$" : "?",
+                     static_cast<int>(visible.x + 13),
+                     static_cast<int>(visible.y + 7), 23,
+                     block.used ? White : DeepBlue);
+    }
+
+    for (const Cannon &cannon : cannons)
+    {
+        const float x = cannon.bounds.x - cameraX;
+        DrawRectangleRounded({x, cannon.bounds.y + 12, cannon.bounds.width,
+                              cannon.bounds.height - 12}, 0.15f, 6, DeepBlue);
+        DrawRectangleRounded({x + 25, cannon.bounds.y + 3, 31, 16},
+                             0.2f, 5, Red);
+        DrawCircle(static_cast<int>(x + 12), static_cast<int>(cannon.bounds.y + 24),
+                   6, Gold);
+        DrawGameText("$", static_cast<int>(x + 8),
+                     static_cast<int>(cannon.bounds.y + 18), 12, DeepBlue);
+    }
+
+    for (const HazardProjectile &projectile : hazardProjectiles)
+    {
+        if (!projectile.alive) continue;
+        const int x = static_cast<int>(projectile.bounds.x - cameraX);
+        const int y = static_cast<int>(projectile.bounds.y);
+        DrawCircle(x + 8, y + 8, 9, Red);
+        DrawCircle(x + 8, y + 8, 5, Gold);
+        DrawGameText("$", x + 5, y + 2, 11, DeepBlue);
     }
 
     for (const Enemy &enemy : enemies)
@@ -628,6 +709,9 @@ int main()
     std::vector<PowerUp> powerUps = MakePowerUps();
     std::vector<Enemy> enemies = MakeEnemies(Difficulties[selectedDifficulty].enemySpeed);
     std::vector<Projectile> projectiles;
+    std::vector<HazardProjectile> hazardProjectiles;
+    std::vector<QuestionBlock> questionBlocks = MakeQuestionBlocks();
+    std::vector<Cannon> cannons = MakeCannons();
     Rectangle player = {90, GroundY - PlayerHeight, PlayerWidth, PlayerHeight};
     Vector2 velocity = {0, 0};
     float cameraX = 0;
@@ -657,6 +741,7 @@ int main()
     bool onGround = true;
     bool climbing = false;
     bool timedOut = false;
+    bool bankrupt = false;
 
     auto playSound = [&](Sound sound) {
         if (soundAvailable && !muted && IsSoundValid(sound)) PlaySound(sound);
@@ -676,6 +761,9 @@ int main()
         powerUps = MakePowerUps();
         enemies = MakeEnemies(Difficulties[selectedDifficulty].enemySpeed);
         projectiles.clear();
+        hazardProjectiles.clear();
+        questionBlocks = MakeQuestionBlocks();
+        cannons = MakeCannons();
         player = {90, GroundY - PlayerHeight, PlayerWidth, PlayerHeight};
         velocity = {0, 0};
         cameraX = 0;
@@ -701,16 +789,19 @@ int main()
         onGround = true;
         climbing = false;
         timedOut = false;
+        bankrupt = false;
     };
 
     auto loseLife = [&]() {
         --lives;
+        balance -= 2000;
         score = std::max(0, score - 250);
         remainingTime = std::max(0.0f, remainingTime - 18.0f);
         playSound(hitSound);
-        if (lives <= 0 || remainingTime <= 0.0f)
+        bankrupt = balance + savings <= 0;
+        if (lives <= 0 || remainingTime <= 0.0f || bankrupt)
         {
-            timedOut = lives > 0;
+            timedOut = lives > 0 && remainingTime <= 0.0f && !bankrupt;
             screen = Screen::GameOver;
             saveRecord();
             return;
@@ -799,6 +890,7 @@ int main()
                     });
                 const bool verticalInput = IsKeyDown(KEY_UP) || IsKeyDown(KEY_W) ||
                     IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S);
+                const float previousTop = player.y;
                 if (onLadder && verticalInput) climbing = true;
 
                 if (climbing)
@@ -880,7 +972,27 @@ int main()
                 }
                 else
                 {
-                    Rectangle playerBounds = {player.x + 2, player.y + 2, player.width - 4, player.height - 3};
+                    for (QuestionBlock &block : questionBlocks)
+                    {
+                        const bool horizontalOverlap = player.x + player.width > block.bounds.x &&
+                            player.x < block.bounds.x + block.bounds.width;
+                        const bool hitFromBelow = !block.used && velocity.y < 0 &&
+                            horizontalOverlap && previousTop >= block.bounds.y + block.bounds.height &&
+                            player.y <= block.bounds.y + block.bounds.height;
+                        if (!hitFromBelow) continue;
+
+                        block.used = true;
+                        player.y = block.bounds.y + block.bounds.height;
+                        velocity.y = 0;
+                        powerUps.push_back({{block.bounds.x + block.bounds.width / 2,
+                                             block.bounds.y - 12},
+                                            false, false, -170.0f});
+                        score += 100;
+                        playSound(pickupSound);
+                    }
+
+                    Rectangle playerBounds = {player.x + 2, player.y + 2,
+                                               player.width - 4, player.height - 3};
 
                     for (Coin &coin : coins)
                     {
@@ -895,6 +1007,16 @@ int main()
 
                     for (PowerUp &powerUp : powerUps)
                     {
+                        if (powerUp.velocityY != 0.0f)
+                        {
+                            powerUp.position.y += powerUp.velocityY * delta;
+                            powerUp.velocityY += 520.0f * delta;
+                            if (powerUp.position.y >= GroundY - 18.0f)
+                            {
+                                powerUp.position.y = GroundY - 18.0f;
+                                powerUp.velocityY = 0.0f;
+                            }
+                        }
                         if (powerUp.collected || !CheckCollisionCircleRec(powerUp.position, 18, playerBounds))
                             continue;
                         powerUp.collected = true;
@@ -914,7 +1036,69 @@ int main()
                             enemy.speed = -enemy.speed;
                             enemy.bounds.x = std::clamp(enemy.bounds.x, enemy.patrolStart, enemy.patrolEnd);
                         }
+                        if (enemy.throwsThings)
+                        {
+                            enemy.shotCooldown -= delta;
+                            const float enemyCenter = enemy.bounds.x + enemy.bounds.width / 2;
+                            const float distance = std::abs(enemyCenter -
+                                (player.x + player.width / 2));
+                            if (distance < 430.0f && enemy.shotCooldown <= 0.0f)
+                            {
+                                const float directionToPlayer =
+                                    player.x < enemy.bounds.x ? -1.0f : 1.0f;
+                                hazardProjectiles.push_back({
+                                    {enemyCenter, enemy.bounds.y + 12, 16, 16},
+                                    directionToPlayer * (210.0f + level * 25.0f), true});
+                                enemy.shotCooldown = std::max(1.0f,
+                                    2.3f - level * 0.35f -
+                                    (selectedDifficulty == 2 ? 0.25f : 0.0f));
+                            }
+                        }
                     }
+
+                    for (Cannon &cannon : cannons)
+                    {
+                        cannon.shotCooldown -= delta;
+                        const float cannonCenter = cannon.bounds.x + cannon.bounds.width / 2;
+                        if (std::abs(cannonCenter - (player.x + player.width / 2)) < 560.0f &&
+                            cannon.shotCooldown <= 0.0f)
+                        {
+                            const float directionToPlayer =
+                                player.x < cannonCenter ? -1.0f : 1.0f;
+                            hazardProjectiles.push_back({
+                                {cannonCenter, cannon.bounds.y + 11, 18, 16},
+                                directionToPlayer * (245.0f + level * 30.0f), true});
+                            cannon.shotCooldown = std::max(0.9f,
+                                2.6f - level * 0.45f -
+                                (selectedDifficulty == 2 ? 0.3f : 0.0f));
+                        }
+                    }
+
+                    for (HazardProjectile &projectile : hazardProjectiles)
+                    {
+                        if (!projectile.alive) continue;
+                        projectile.bounds.x += projectile.speed * delta;
+                        const float projectileScreenX = projectile.bounds.x - cameraX;
+                        if (projectileScreenX < -60.0f ||
+                            projectileScreenX > ScreenWidth + 60.0f)
+                        {
+                            projectile.alive = false;
+                            continue;
+                        }
+                        if (CheckCollisionRecs(playerBounds, projectile.bounds))
+                        {
+                            projectile.alive = false;
+                            if (shieldTime <= 0.0f && invulnerabilityTime <= 0.0f)
+                            {
+                                loseLife();
+                                if (screen != Screen::Playing) break;
+                            }
+                        }
+                    }
+                    hazardProjectiles.erase(std::remove_if(hazardProjectiles.begin(),
+                        hazardProjectiles.end(),
+                        [](const HazardProjectile &projectile) { return !projectile.alive; }),
+                        hazardProjectiles.end());
 
                     if (IsKeyPressed(KEY_X) && ammo > 0 && shotCooldown <= 0.0f)
                     {
@@ -950,24 +1134,27 @@ int main()
                     projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
                         [](const Projectile &projectile) { return !projectile.alive; }), projectiles.end());
 
-                    for (Enemy &enemy : enemies)
+                    if (screen == Screen::Playing)
                     {
-                        if (!enemy.alive || !CheckCollisionRecs(playerBounds, enemy.bounds)) continue;
-                        const bool stomp = velocity.y > 80.0f &&
-                            player.y + player.height < enemy.bounds.y + 17.0f;
-                        if (stomp)
+                        for (Enemy &enemy : enemies)
                         {
-                            enemy.alive = false;
-                            velocity.y = -360.0f;
-                            onGround = false;
-                            score += 250;
-                            playSound(pickupSound);
+                            if (!enemy.alive || !CheckCollisionRecs(playerBounds, enemy.bounds)) continue;
+                            const bool stomp = velocity.y > 80.0f &&
+                                player.y + player.height < enemy.bounds.y + 17.0f;
+                            if (stomp)
+                            {
+                                enemy.alive = false;
+                                velocity.y = -360.0f;
+                                onGround = false;
+                                score += 250;
+                                playSound(pickupSound);
+                            }
+                            else if (shieldTime <= 0.0f && invulnerabilityTime <= 0.0f)
+                            {
+                                loseLife();
+                            }
+                            break;
                         }
-                        else if (shieldTime <= 0.0f && invulnerabilityTime <= 0.0f)
-                        {
-                            loseLife();
-                        }
-                        break;
                     }
 
                     if (screen == Screen::Playing && nextDecision < static_cast<int>(Decisions.size()) &&
@@ -1038,7 +1225,13 @@ int main()
                 lastBalanceChange = balance - oldBalance;
                 lastSavingsChange = savings - oldSavings;
                 score += decision.risky[selectedOption] ? 50 : 300;
-                if (decision.risky[selectedOption])
+                if (balance + savings <= 0)
+                {
+                    bankrupt = true;
+                    screen = Screen::GameOver;
+                    saveRecord();
+                }
+                else if (decision.risky[selectedOption])
                 {
                     const float enemyX = std::min(player.x + 240.0f, WorldWidth - 100.0f);
                     enemies.push_back({{enemyX, GroundY - 30, 34, 30},
@@ -1046,7 +1239,7 @@ int main()
                                        -110.0f * Difficulties[selectedDifficulty].enemySpeed,
                                        true});
                 }
-                screen = Screen::Feedback;
+                if (!bankrupt) screen = Screen::Feedback;
                 playSound(decision.risky[selectedOption] ? hitSound : pickupSound);
             }
         }
@@ -1106,7 +1299,8 @@ int main()
 
         BeginDrawing();
         DrawBackdrop(cameraX, level);
-        DrawWorld(cameraX, nextDecision, coins, powerUps, enemies);
+        DrawWorld(cameraX, nextDecision, coins, powerUps, enemies,
+                  questionBlocks, cannons, hazardProjectiles);
         for (const Projectile &projectile : projectiles)
         {
             if (!projectile.alive) continue;
@@ -1131,7 +1325,7 @@ int main()
             DrawGameText("Ruta del", 165, 166, 48, DeepBlue);
             DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
             DrawGameText("Tres niveles. Cada decision deja una consecuencia.", 165, 283, 19, Ink);
-            DrawGameText("Monedas, deudas perseguidoras, escaleras y una meta final.", 165, 317, 16, Muted);
+            DrawGameText("Bloques sorpresa, deudas, canones y una meta final.", 165, 317, 16, Muted);
             DrawGameText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
             const float difficultyCardWidth = 210.0f;
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
@@ -1146,9 +1340,9 @@ int main()
             DrawGameText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
             DrawGameText("JUGAR  /  ESPACIO", 184, 456, 15, White);
-            DrawGameText("Mover A/D  Saltar ESPACIO  Escalar W/S  Pausa P",
+            DrawGameText("A/D mover  ESPACIO saltar/golpear  W/S escalar  P pausa",
                      165, 491, 13, Ink);
-            DrawGameText(TextFormat("Semillas X  Sonido M  Record local: %06d", bestScore),
+            DrawGameText(TextFormat("Semillas X  Golpe: -$2000/vida  M sonido  Record: %06d", bestScore),
                      165, 508, 12, Blue);
             if (records.storageError)
                 DrawGameText("No se pudo guardar datos en este equipo.", 650, 508, 12, Red);
@@ -1184,11 +1378,8 @@ int main()
             DrawGameText("META ALCANZADA / FONDO FUTURO", 205, 150, 18, LeafGreen);
             DrawGameText("Tu plan llego", 205, 192, 40, DeepBlue);
             DrawGameText("mas lejos que la deuda.", 205, 235, 40, DeepBlue);
-            if (balance < 0)
-                DrawGameText(TextFormat("Deuda final: $%d      Ahorro: $%d", -balance, savings),
-                         205, 302, 20, Ink);
-            else
-                DrawGameText(TextFormat("Saldo final: $%d      Ahorro: $%d", balance, savings),
+            DrawGameText(TextFormat("CAPITAL FINAL: $%d  (saldo $%d + ahorro $%d)",
+                                    balance + savings, balance, savings),
                          205, 302, 20, Ink);
             DrawGameText(TextFormat("Puntos: %06d     Tiempo restante: %d s", score,
                                 static_cast<int>(remainingTime)), 205, 340, 18, Blue);
@@ -1197,10 +1388,13 @@ int main()
         }
         else if (screen == Screen::GameOver)
         {
-            DrawMessagePanel("PARTIDA TERMINADA",
-                             timedOut ? "Se acabo el tiempo" : "Te quedaste sin vidas",
-                             timedOut ? "Cada golpe quita 18 segundos y 250 puntos." :
-                                        "Esquiva, salta o usa semillas para sobrevivir.",
+            const int finalCapital = balance + savings;
+            const char *reason = bankrupt ? "BANCARROTA" :
+                (timedOut ? "Se acabo el tiempo" : "Te quedaste sin vidas");
+            DrawMessagePanel(bankrupt ? "FINANZAS EN ROJO" : "PARTIDA TERMINADA",
+                             reason,
+                             TextFormat("Capital final: $%d  (saldo $%d + ahorro $%d)",
+                                        finalCapital, balance, savings),
                              score);
         }
         else if (screen == Screen::Rating)
