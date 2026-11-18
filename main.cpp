@@ -186,8 +186,8 @@ const std::vector<Platform> Platforms = {
     {{2370, 405, 105, 16}}, {{2525, 365, 115, 16}}, {{2680, 425, 65, 16}},
     {{3035, 435, 100, 16}}, {{3710, 410, 125, 16}},
     {{4360, 410, 110, 16}}, {{4540, 370, 130, 16}},
-    {{4720, 425, 65, 16}}, {{4970, 405, 110, 16}}, {{5150, 355, 140, 16}},
-    {{5750, 415, 125, 16}}
+    {{4720, 425, 65, 16}}, {{5050, 405, 110, 16}}, {{5090, 355, 140, 16}},
+    {{5650, 415, 125, 16}}
 };
 
 const std::vector<GroundGap> Gaps = {
@@ -204,9 +204,9 @@ std::vector<Coin> MakeCoins()
         {{350, 380}, false}, {{980, 350}, false}, {{1430, 305}, false},
         {{2220, 380}, false}, {{2920, 350}, false}, {{3390, 305}, false},
         {{4220, 380}, false}, {{4920, 350}, false}, {{5390, 305}, false},
-        {{575, 400}, false}, {{1165, 390}, false},
-        {{2400, 365}, false}, {{2565, 325}, false}, {{3735, 370}, false},
-        {{4395, 375}, false}, {{4590, 330}, false}, {{5010, 365}, false},
+        {{575, 400}, false}, {{1250, 330}, false},
+        {{2480, 350}, false}, {{2565, 325}, false}, {{3735, 370}, false},
+        {{4500, 335}, false}, {{4590, 330}, false}, {{5010, 365}, false},
         {{5200, 315}, false}, {{5795, 375}, false}
     };
 }
@@ -214,9 +214,9 @@ std::vector<Coin> MakeCoins()
 std::vector<PowerUp> MakePowerUps()
 {
     return {
-        {{610, 455}, false, false},
-        {{2380, 455}, false, true},
-        {{4380, 455}, false, false}
+        {{500, 472}, false, false},
+        {{2100, 472}, false, true},
+        {{4400, 390}, false, false}
     };
 }
 
@@ -224,17 +224,17 @@ std::vector<QuestionBlock> MakeQuestionBlocks()
 {
     return {
         {{390, 350, 42, 38}, false}, {{1170, 355, 42, 38}, false},
-        {{2390, 350, 42, 38}, false}, {{3260, 335, 42, 38}, false},
-        {{4390, 350, 42, 38}, false}, {{5260, 335, 42, 38}, false}
+        {{2100, 350, 42, 38}, false}, {{3160, 335, 42, 38}, false},
+        {{4100, 350, 42, 38}, false}, {{5000, 300, 42, 38}, false}
     };
 }
 
 std::vector<Cannon> MakeCannons()
 {
     return {
-        {{1100, GroundY - 38, 48, 38}, 1.5f},
-        {{3100, GroundY - 38, 48, 38}, 1.8f},
-        {{5100, GroundY - 38, 48, 38}, 2.1f}
+        {{1260, GroundY - 38, 48, 38}, 1.5f},
+        {{3220, GroundY - 38, 48, 38}, 1.8f},
+        {{5200, GroundY - 38, 48, 38}, 2.1f}
     };
 }
 
@@ -248,16 +248,16 @@ std::vector<Enemy> MakeEnemies(float difficultySpeed)
         {{1900, GroundY - 30, 34, 30}, 1850, 1960, 125 * difficultySpeed, true},
         {{2240, GroundY - 30, 34, 30}, 2160, 2320, 100 * difficultySpeed, true},
         {{2420, GroundY - 30, 34, 30}, 2370, 2490, 115 * difficultySpeed, true},
-        {{2630, GroundY - 30, 34, 30}, 2560, 2710, 125 * difficultySpeed, true},
+        {{2650, GroundY - 30, 34, 30}, 2600, 2720, 125 * difficultySpeed, true},
         {{3050, GroundY - 30, 34, 30}, 2990, 3110, 110 * difficultySpeed, true},
-        {{3400, GroundY - 30, 34, 30}, 3320, 3480, 125 * difficultySpeed, true},
-        {{3800, GroundY - 30, 34, 30}, 3720, 3880, 135 * difficultySpeed, true},
+        {{3650, GroundY - 30, 34, 30}, 3600, 3690, 125 * difficultySpeed, true},
+        {{3800, GroundY - 30, 34, 30}, 3760, 3880, 135 * difficultySpeed, true},
         {{4260, GroundY - 30, 34, 30}, 4180, 4340, 105 * difficultySpeed, true},
         {{4440, GroundY - 30, 34, 30}, 4390, 4510, 120 * difficultySpeed, true},
         {{4670, GroundY - 30, 34, 30}, 4590, 4750, 130 * difficultySpeed, true},
-        {{5100, GroundY - 30, 34, 30}, 5040, 5160, 120 * difficultySpeed, true},
-        {{5430, GroundY - 30, 34, 30}, 5350, 5510, 135 * difficultySpeed, true},
-        {{5800, GroundY - 30, 34, 30}, 5730, 5890, 145 * difficultySpeed, true}
+        {{5100, GroundY - 30, 34, 30}, 5040, 5140, 120 * difficultySpeed, true},
+        {{5350, GroundY - 30, 34, 30}, 5310, 5400, 135 * difficultySpeed, true},
+        {{5650, GroundY - 30, 34, 30}, 5580, 5720, 145 * difficultySpeed, true}
     };
     for (std::size_t i = 2; i < enemies.size(); i += 4)
     {
@@ -1009,9 +1009,28 @@ int main()
                     {
                         if (powerUp.velocityY != 0.0f)
                         {
+                            const float previousBottom = powerUp.position.y + 18.0f;
                             powerUp.position.y += powerUp.velocityY * delta;
                             powerUp.velocityY += 520.0f * delta;
-                            if (powerUp.position.y >= GroundY - 18.0f)
+                            if (powerUp.velocityY > 0.0f)
+                            {
+                                for (const Platform &platform : Platforms)
+                                {
+                                    const bool horizontalOverlap =
+                                        powerUp.position.x + 14.0f > platform.bounds.x &&
+                                        powerUp.position.x - 14.0f <
+                                            platform.bounds.x + platform.bounds.width;
+                                    if (horizontalOverlap && previousBottom <= platform.bounds.y &&
+                                        powerUp.position.y + 18.0f >= platform.bounds.y)
+                                    {
+                                        powerUp.position.y = platform.bounds.y - 18.0f;
+                                        powerUp.velocityY = 0.0f;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (powerUp.velocityY != 0.0f &&
+                                powerUp.position.y >= GroundY - 18.0f)
                             {
                                 powerUp.position.y = GroundY - 18.0f;
                                 powerUp.velocityY = 0.0f;
