@@ -9,12 +9,19 @@ commercial game franchises.
 Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
 and Mercado de las metas. Each stage has its own palette, platform routes,
 enemies, and financial lesson. Jump across gaps, climb ladders, collect coins,
-and make six decisions about everyday finances. Some debt enemies throw bills
-and cannons fire money shots; dodge them by jumping or stomp enemies from
-above. Jump into the marked blocks from below to release seeds, then press `X`
-to shoot. Each hit costs one life, $2,000, and 18 seconds. Reaching the vault
-with the most capital (balance plus savings) is the goal; running out of lives
-or money ends the run.
+and face nine financial decisions. The three questions in each stage and the
+order of their answers are randomized; answer choices do not reveal which is
+safer. Feedback explains hidden fees, debt, and trade-offs, while a risky
+choice costs money and brings a pursuer. Coins are worth $250, so careful
+choices matter more than collecting every coin.
+
+Debt enemies throw bills, later-stage enemies jump and toss arcing projectiles,
+and cannons fire money shots. Dodge them by jumping or stomp enemies from
+above. Your savings seeds can shoot enemies with `X`; shots and hazards stop at
+stage boundaries. Jump into fruit blocks from below to release seeds. Press
+`Down` while standing on a platform to drop through it. Each hit costs one
+life, $2,000, and 18 seconds. Reaching the vault with the most capital
+(balance plus savings) is the goal; running out of lives or money ends the run.
 
 Choose Tranquilo, Aventura, or Reto at the title screen with the left/right
 arrows or `1`-`3`. The modes change the starting lives, time limit, and enemy
@@ -37,6 +44,7 @@ shared online. All money in the game is fictional.
 - Choose a financial decision: click an option or press `1`/`2` (applies immediately)
 - Shoot a savings seed: `X` (after collecting one)
 - Hit a marked block from below: jump into it
+- Drop through a platform: `Down` while standing on it
 - Pause/resume: `P`
 - Continue: `Enter`
 - Start a difficulty: click its card or press `1`-`3`; `Space` starts the selected one

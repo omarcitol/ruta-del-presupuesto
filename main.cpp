@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -81,6 +83,9 @@ struct Enemy {
     float speed;
     bool alive;
     bool throwsThings = false;
+    bool jumps = false;
+    float jumpCooldown = 1.5f;
+    float verticalSpeed = 0.0f;
     float shotCooldown = 2.0f;
 };
 
@@ -88,12 +93,16 @@ struct Projectile {
     Rectangle bounds;
     float speed;
     bool alive;
+    int level;
 };
 
 struct HazardProjectile {
     Rectangle bounds;
-    float speed;
+    float speedX;
+    float speedY;
+    float gravity;
     bool alive;
+    int level;
 };
 
 struct QuestionBlock {
@@ -148,32 +157,70 @@ const char *const StageLessons[LevelCount] = {
     "Prepara un fondo y protege tu meta."
 };
 
-const std::vector<Decision> Decisions = {
-    {600, "1 / INGRESO", "Recibes $12.000. Como te organizas?",
-     {"Apartas $2.000 para tu meta", "Gastas $3.000 en un antojo"},
-     {"Buena jugada: tu meta ya tiene un inicio.", "El gusto se disfruta, pero reduce tu margen."},
-     {-2000, -3000}, {2000, 0}, {false, true}},
-    {1450, "2 / NECESIDAD", "Tu telefono dejo de funcionar.",
-     {"Reparas lo necesario: $2.500", "Compras uno nuevo a credito: $6.000"},
-     {"Resuelves la necesidad sin cargar una deuda grande.", "La cuota parece pequena, pero compromete el presupuesto."},
-     {-2500, -6000}, {0, 0}, {false, true}},
-    {2600, "3 / TRANSPORTE", "Debes llegar a clases toda la semana.",
-     {"Planificas bus: $900", "Pides taxi cada dia: $2.400"},
-     {"Planificar el traslado libera dinero para otras prioridades.", "La comodidad cuesta mas esta semana."},
-     {-900, -2400}, {0, 0}, {false, true}},
-    {3450, "4 / OFERTA", "Una tienda ofrece una compra en cuotas.",
-     {"Comparas el costo total antes de decidir", "Aceptas sin revisar intereses: $2.000 extra"},
-     {"Comparar condiciones tambien es cuidar tu dinero.", "Sin revisar intereses, el precio final puede sorprenderte."},
-     {0, -2000}, {0, 0}, {false, true}},
-    {4600, "5 / IMPREVISTO", "Aparece un gasto medico de $1.500.",
-     {"Usas el ahorro y cubres lo que falte", "Pides prestado y pagas $300 extra"},
-     {"El fondo de emergencia existe para momentos como este.", "La deuda resuelve hoy, pero aumenta el costo."},
-     {0, -1800}, {-1500, 0}, {false, true}},
-    {5450, "6 / META", "Quieres reunir $6.000 para estudiar.",
-     {"Proteges el ahorro y revisas tu avance", "Usas $2.000 del ahorro para un gusto"},
-     {"Llegaste con un plan y el ahorro queda protegido.", "La meta se aleja; puedes intentarlo de nuevo con otro plan."},
-     {0, 0}, {0, -2000}, {false, true}}
-};
+std::vector<Decision> MakeDecisions()
+{
+    std::vector<Decision> decisions = {
+        {0, "BARRIO / COMPRA", "Efectivo $4.800 o 6 cuotas y $500 de apertura?",
+         {"Pagas $4.800 al contado", "Pagas $800 x 6 y $500 de apertura"},
+         {"El total al contado es menor que financiarlo.", "Las cuotas suman $5.300; faltaba la apertura."},
+         {-4800, -5300}, {0, 0}, {false, true}},
+        {0, "BARRIO / IMPREVISTO", "Un gasto urgente cuesta $1.800. Tienes ahorro.",
+         {"Usas $1.500 del fondo y ajustas $300", "Lo cargas a credito: total $2.300"},
+         {"El fondo cubre parte; completas solo lo necesario.", "La urgencia cuesta $500 mas al financiarla."},
+         {-300, -2300}, {-1500, 0}, {false, true}},
+        {0, "BARRIO / PRESUPUESTO", "Tienes $5.000; comida y pasaje cuestan $3.200.",
+         {"Cubres lo fijo y guardas $700", "Gastas primero; luego ves que queda"},
+         {"Priorizaste lo necesario y separaste una parte.", "Los gastos sin plan dejaron menos margen."},
+         {-3900, -4800}, {700, 0}, {false, true}},
+        {0, "CUOTAS / COSTO REAL", "Precio contado $4.500. Cuotas: 4 x $1.100 + $600.",
+         {"Pagas $4.500 al contado", "Tomas las cuotas: suman $5.000"},
+         {"Revisar el total evita pagar $500 de mas.", "La cuota parecia baja; el total era $5.000."},
+         {-4500, -5000}, {0, 0}, {false, true}},
+        {0, "CUOTAS / PRESTAMO", "Te prestan $3.000; debes devolver $3.900.",
+         {"Pides solo $500 y renegocias el resto", "Aceptas $3.000 por salir del apuro"},
+         {"Reducir el prestamo limita el costo futuro.", "El apuro agrega $900; no preguntaste el total."},
+         {-500, -3900}, {0, 0}, {false, true}},
+        {0, "CUOTAS / MATERIALES", "Materiales: $2.000. 10% al contado; cuotas y extras: $2.700.",
+         {"Pagas $1.800; no compras extras", "Aceptas cuotas y agregas $700 en extras"},
+         {"El descuento sirve si respetas la compra prevista.", "Los extras y cargos borraron el descuento."},
+         {-1800, -2700}, {0, 0}, {false, true}},
+        {0, "MERCADO / LETRA PEQUENA", "Oferta: $900 x 8 + $1.200 inicial + seguro $150 x 8.",
+         {"Rechazas; buscas opcion de $8.400", "Firmas: cuotas, inicial y seguro"},
+         {"Sumar cuotas, inicial y seguro revela el costo real.", "La letra pequena subio el total a $9.600."},
+         {-8400, -9600}, {0, 0}, {false, true}},
+        {0, "MERCADO / PROMESA", "Prometen 30% semanal si transfieres $2.500 hoy.",
+         {"Verificas la entidad; no transfieres aun", "Pruebas con $2.500 de tu ahorro"},
+         {"Una promesa no prueba que la inversion sea segura.", "Sin verificar, arriesgaste dinero que podia perderse."},
+         {0, 0}, {0, -2500}, {false, true}},
+        {0, "MERCADO / META", "Ahorro $4.000; gasto $1.200 o credito total $2.500.",
+         {"Usas el fondo y reajustas la fecha de tu meta", "Pides $2.000 prestados para no tocar la meta"},
+         {"El fondo cumple su funcion; luego retomas la meta.", "La deuda cuesta $2.500 y no hace desaparecer el gasto."},
+         {0, -2500}, {-1200, 0}, {false, true}}
+    };
+    const float positions[] = {500, 1120, 1730, 2500, 3100, 3700, 4500, 5100, 5750};
+    std::mt19937 generator(static_cast<unsigned int>(GetRandomValue(1, 2147483647)));
+    for (std::size_t stage = 0; stage < LevelCount; ++stage)
+    {
+        const auto first = decisions.begin() + static_cast<std::ptrdiff_t>(stage * 3);
+        std::shuffle(first, first + 3, generator);
+    }
+    for (std::size_t i = 0; i < decisions.size(); ++i)
+    {
+        Decision &decision = decisions[i];
+        decision.x = positions[i];
+        if (std::uniform_int_distribution<int>(0, 1)(generator) == 1)
+        {
+            std::swap(decision.options[0], decision.options[1]);
+            std::swap(decision.feedback[0], decision.feedback[1]);
+            std::swap(decision.balanceChange[0], decision.balanceChange[1]);
+            std::swap(decision.savingsChange[0], decision.savingsChange[1]);
+            std::swap(decision.risky[0], decision.risky[1]);
+        }
+    }
+    return decisions;
+}
+
+std::vector<Decision> Decisions;
 
 const std::vector<Platform> Platforms = {
     {{280, 420, 145, 18}}, {{940, 390, 150, 18}}, {{1285, 345, 160, 18}},
@@ -204,7 +251,7 @@ std::vector<Coin> MakeCoins()
         {{350, 380}, false}, {{980, 350}, false}, {{1430, 305}, false},
         {{2220, 380}, false}, {{2920, 350}, false}, {{3390, 305}, false},
         {{4220, 380}, false}, {{4920, 350}, false}, {{5390, 305}, false},
-        {{575, 400}, false}, {{1250, 330}, false},
+        {{575, 400}, false}, {{1115, 360}, false},
         {{2480, 350}, false}, {{2565, 325}, false}, {{3735, 370}, false},
         {{4500, 335}, false}, {{4590, 330}, false}, {{5010, 365}, false},
         {{5200, 315}, false}, {{5795, 375}, false}
@@ -223,9 +270,10 @@ std::vector<PowerUp> MakePowerUps()
 std::vector<QuestionBlock> MakeQuestionBlocks()
 {
     return {
-        {{390, 350, 42, 38}, false}, {{1170, 355, 42, 38}, false},
-        {{2100, 350, 42, 38}, false}, {{3160, 335, 42, 38}, false},
-        {{4100, 350, 42, 38}, false}, {{5000, 300, 42, 38}, false}
+        {{650, 350, 42, 38}, false}, {{1240, 350, 42, 38}, false},
+        {{1840, 350, 42, 38}, false}, {{3420, 330, 42, 38}, false},
+        {{3980, 350, 42, 38}, false}, {{5438, 390, 42, 38}, false},
+        {{5830, 350, 42, 38}, false}
     };
 }
 
@@ -263,6 +311,13 @@ std::vector<Enemy> MakeEnemies(float difficultySpeed)
     {
         enemies[i].throwsThings = true;
         enemies[i].shotCooldown = 1.5f + static_cast<float>(i % 3) * 0.25f;
+    }
+    for (const std::size_t index : {6u, 10u, 14u, 16u})
+    {
+        enemies[index].jumps = true;
+        enemies[index].throwsThings = true;
+        enemies[index].jumpCooldown = 1.0f + static_cast<float>(index % 3) * 0.35f;
+        enemies[index].shotCooldown = 1.8f;
     }
     return enemies;
 }
@@ -598,7 +653,7 @@ void DrawHud(int balance, int savings, int progress, int score, int bestScore,
     DrawGameText(TextFormat("RECORD %06d", bestScore), 500, 42, 14, Muted);
     DrawGameText(TextFormat("TIEMPO %03d", static_cast<int>(timeLeft)), 720, 12, 16, Red);
     DrawGameText(TextFormat("VIDAS %d   SEMILLAS %d", lives, ammo), 720, 42, 14, Ink);
-    DrawGameText(TextFormat("%d/6", progress), 918, 15, 16, DeepBlue);
+    DrawGameText(TextFormat("%d/9", progress), 918, 15, 16, DeepBlue);
     DrawGameText(!soundAvailable ? "SIN AUDIO" : (muted ? "MUDO [M]" : "AUDIO [M]"),
              900, 45, 12, Muted);
 }
@@ -610,7 +665,7 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
     DrawRectangleRounded({135, 112, 730, 386}, 0.05f, 12, Paper);
     DrawRectangle(135, 112, 730, 12, Red);
     DrawGameText(decision.title, 180, 145, 18, Red);
-    DrawGameText(decision.question, 180, 179, 26, Ink);
+    DrawGameText(decision.question, 180, 179, 20, Ink);
     if (balance < 0)
         DrawGameText(TextFormat("DEUDA $%d     AHORRO $%d     PUNTOS %d", -balance, savings, score),
                  180, 219, 16, Muted);
@@ -622,10 +677,10 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
     {
         const Rectangle optionBounds = {170, static_cast<float>(264 + i * 82), 660, 60};
         const bool hovered = CheckCollisionPointRec(GetMousePosition(), optionBounds);
-        const Color choiceColor = i == 0 ? Color{214, 239, 195, 255} : Color{255, 223, 198, 255};
+        const Color choiceColor = Color{231, 234, 224, 255};
         DrawRectangleRounded(optionBounds, 0.15f, 8, choiceColor);
         if (hovered) DrawRectangleLinesEx(optionBounds, 3, DeepBlue);
-        DrawCircle(198, static_cast<int>(optionBounds.y + 30), 15, i == 0 ? LeafGreen : Red);
+        DrawCircle(198, static_cast<int>(optionBounds.y + 30), 15, Blue);
         DrawGameText(TextFormat("%d", i + 1), 193, static_cast<int>(optionBounds.y + 18), 17, White);
         DrawGameText(decision.options[i], 232, static_cast<int>(optionBounds.y + 18), 18, Ink);
     }
@@ -672,6 +727,7 @@ int main()
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(ScreenWidth, ScreenHeight, "Ruta del presupuesto");
     SetTargetFPS(60);
+    Decisions = MakeDecisions();
 
 #if defined(PLATFORM_WEB)
     std::vector<int> fontCodepoints;
@@ -740,6 +796,8 @@ int main()
     bool facingRight = true;
     bool onGround = true;
     bool climbing = false;
+    float dropThroughTime = 0.0f;
+    float dropThroughPlatformY = -1.0f;
     bool timedOut = false;
     bool bankrupt = false;
 
@@ -757,6 +815,7 @@ int main()
     };
 
     auto resetRun = [&]() {
+        Decisions = MakeDecisions();
         coins = MakeCoins();
         powerUps = MakePowerUps();
         enemies = MakeEnemies(Difficulties[selectedDifficulty].enemySpeed);
@@ -788,6 +847,8 @@ int main()
         facingRight = true;
         onGround = true;
         climbing = false;
+        dropThroughTime = 0.0f;
+        dropThroughPlatformY = -1.0f;
         timedOut = false;
         bankrupt = false;
     };
@@ -864,6 +925,8 @@ int main()
             shieldTime = std::max(0.0f, shieldTime - delta);
             invulnerabilityTime = std::max(0.0f, invulnerabilityTime - delta);
             shotCooldown = std::max(0.0f, shotCooldown - delta);
+            dropThroughTime = std::max(0.0f, dropThroughTime - delta);
+            if (dropThroughTime <= 0.0f) dropThroughPlatformY = -1.0f;
 
             if (remainingTime <= 0.0f)
             {
@@ -892,6 +955,23 @@ int main()
                     IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S);
                 const float previousTop = player.y;
                 if (onLadder && verticalInput) climbing = true;
+
+                if (onGround && !onLadder && IsKeyPressed(KEY_DOWN))
+                {
+                    for (const Platform &platform : Platforms)
+                    {
+                        const bool standingOnPlatform =
+                            std::abs(player.y + player.height - platform.bounds.y) < 1.0f &&
+                            player.x + player.width > platform.bounds.x &&
+                            player.x < platform.bounds.x + platform.bounds.width;
+                        if (!standingOnPlatform) continue;
+                        dropThroughTime = 0.2f;
+                        dropThroughPlatformY = platform.bounds.y;
+                        velocity.y = 130.0f;
+                        onGround = false;
+                        break;
+                    }
+                }
 
                 if (climbing)
                 {
@@ -946,7 +1026,9 @@ int main()
                             player.x < platform.bounds.x + platform.bounds.width;
                         const bool crossedTop = previousBottom <= platform.bounds.y &&
                             player.y + player.height >= platform.bounds.y && velocity.y >= 0;
-                        if (horizontalOverlap && crossedTop)
+                        const bool dropThroughPlatform = dropThroughTime > 0.0f &&
+                            std::abs(platform.bounds.y - dropThroughPlatformY) < 1.0f;
+                        if (horizontalOverlap && crossedTop && !dropThroughPlatform)
                         {
                             player.y = platform.bounds.y - player.height;
                             velocity.y = 0;
@@ -999,8 +1081,8 @@ int main()
                         if (!coin.collected && CheckCollisionCircleRec(coin.position, 16, playerBounds))
                         {
                             coin.collected = true;
-                            balance += 500;
-                            score += 100;
+                            balance += 250;
+                            score += 75;
                             playSound(pickupSound);
                         }
                     }
@@ -1048,12 +1130,38 @@ int main()
                     for (Enemy &enemy : enemies)
                     {
                         if (!enemy.alive) continue;
-                        const float stageSpeed = 1.0f + level * 0.18f;
+                        const int enemyLevel = std::clamp(
+                            static_cast<int>(enemy.bounds.x / LevelWidth), 0, LevelCount - 1);
+                        const float stageSpeed = 1.0f + enemyLevel * 0.18f;
                         enemy.bounds.x += enemy.speed * stageSpeed * delta;
                         if (enemy.bounds.x >= enemy.patrolEnd || enemy.bounds.x <= enemy.patrolStart)
                         {
                             enemy.speed = -enemy.speed;
                             enemy.bounds.x = std::clamp(enemy.bounds.x, enemy.patrolStart, enemy.patrolEnd);
+                        }
+                        if (enemy.jumps)
+                        {
+                            if (enemy.bounds.y + enemy.bounds.height >= GroundY - 0.5f)
+                            {
+                                enemy.bounds.y = GroundY - enemy.bounds.height;
+                                enemy.verticalSpeed = 0.0f;
+                                enemy.jumpCooldown -= delta;
+                                if (enemy.jumpCooldown <= 0.0f)
+                                {
+                                    enemy.verticalSpeed = -390.0f - enemyLevel * 30.0f;
+                                    enemy.jumpCooldown = 2.8f - enemyLevel * 0.3f;
+                                }
+                            }
+                            else
+                            {
+                                enemy.bounds.y += enemy.verticalSpeed * delta;
+                                enemy.verticalSpeed += 1100.0f * delta;
+                                if (enemy.bounds.y + enemy.bounds.height >= GroundY)
+                                {
+                                    enemy.bounds.y = GroundY - enemy.bounds.height;
+                                    enemy.verticalSpeed = 0.0f;
+                                }
+                            }
                         }
                         if (enemy.throwsThings)
                         {
@@ -1067,9 +1175,11 @@ int main()
                                     player.x < enemy.bounds.x ? -1.0f : 1.0f;
                                 hazardProjectiles.push_back({
                                     {enemyCenter, enemy.bounds.y + 12, 16, 16},
-                                    directionToPlayer * (210.0f + level * 25.0f), true});
+                                    directionToPlayer * (145.0f + enemyLevel * 24.0f),
+                                    enemy.jumps ? -350.0f - enemyLevel * 25.0f : 0.0f,
+                                    enemy.jumps ? 680.0f : 0.0f, true, enemyLevel});
                                 enemy.shotCooldown = std::max(1.0f,
-                                    2.3f - level * 0.35f -
+                                    2.3f - enemyLevel * 0.35f -
                                     (selectedDifficulty == 2 ? 0.25f : 0.0f));
                             }
                         }
@@ -1086,7 +1196,8 @@ int main()
                                 player.x < cannonCenter ? -1.0f : 1.0f;
                             hazardProjectiles.push_back({
                                 {cannonCenter, cannon.bounds.y + 11, 18, 16},
-                                directionToPlayer * (245.0f + level * 30.0f), true});
+                                directionToPlayer * (245.0f + level * 30.0f),
+                                0.0f, 0.0f, true, level});
                             cannon.shotCooldown = std::max(0.9f,
                                 2.6f - level * 0.45f -
                                 (selectedDifficulty == 2 ? 0.3f : 0.0f));
@@ -1096,9 +1207,16 @@ int main()
                     for (HazardProjectile &projectile : hazardProjectiles)
                     {
                         if (!projectile.alive) continue;
-                        projectile.bounds.x += projectile.speed * delta;
+                        projectile.bounds.x += projectile.speedX * delta;
+                        projectile.bounds.y += projectile.speedY * delta;
+                        projectile.speedY += projectile.gravity * delta;
                         const float projectileScreenX = projectile.bounds.x - cameraX;
-                        if (projectileScreenX < -60.0f ||
+                        const float stageStart = projectile.level * LevelWidth;
+                        const float stageEnd = stageStart + LevelWidth;
+                        if (projectile.bounds.x + projectile.bounds.width <= stageStart ||
+                            projectile.bounds.x >= stageEnd ||
+                            projectile.bounds.y >= GroundY ||
+                            projectileScreenX < -60.0f ||
                             projectileScreenX > ScreenWidth + 60.0f)
                         {
                             projectile.alive = false;
@@ -1123,7 +1241,7 @@ int main()
                     {
                         const float shotX = facingRight ? player.x + player.width : player.x - 18;
                         projectiles.push_back({{shotX, player.y + 20, 18, 10},
-                                               facingRight ? 460.0f : -460.0f, true});
+                                               facingRight ? 460.0f : -460.0f, true, level});
                         --ammo;
                         shotCooldown = 0.24f;
                         playSound(chooseSound);
@@ -1133,14 +1251,20 @@ int main()
                     {
                         if (!projectile.alive) continue;
                         projectile.bounds.x += projectile.speed * delta;
-                        if (projectile.bounds.x < 0 || projectile.bounds.x > WorldWidth)
+                        const float stageStart = projectile.level * LevelWidth;
+                        const float stageEnd = stageStart + LevelWidth;
+                        if (projectile.bounds.x + projectile.bounds.width <= stageStart ||
+                            projectile.bounds.x >= stageEnd)
                         {
                             projectile.alive = false;
                             continue;
                         }
                         for (Enemy &enemy : enemies)
                         {
-                            if (enemy.alive && CheckCollisionRecs(projectile.bounds, enemy.bounds))
+                            const int enemyLevel = std::clamp(
+                                static_cast<int>(enemy.bounds.x / LevelWidth), 0, LevelCount - 1);
+                            if (enemy.alive && enemyLevel == projectile.level &&
+                                CheckCollisionRecs(projectile.bounds, enemy.bounds))
                             {
                                 enemy.alive = false;
                                 projectile.alive = false;
@@ -1243,7 +1367,7 @@ int main()
                 }
                 lastBalanceChange = balance - oldBalance;
                 lastSavingsChange = savings - oldSavings;
-                score += decision.risky[selectedOption] ? 50 : 300;
+                score = std::max(0, score + (decision.risky[selectedOption] ? -250 : 250));
                 if (balance + savings <= 0)
                 {
                     bankrupt = true;
@@ -1343,8 +1467,8 @@ int main()
             DrawGameText("AVENTURA DE PLATAFORMAS / FINANZAS PERSONALES", 165, 128, 16, Red);
             DrawGameText("Ruta del", 165, 166, 48, DeepBlue);
             DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
-            DrawGameText("Tres niveles. Cada decision deja una consecuencia.", 165, 283, 19, Ink);
-            DrawGameText("Bloques sorpresa, deudas, canones y una meta final.", 165, 317, 16, Muted);
+            DrawGameText("Tres niveles, nueve decisiones y consecuencias reales.", 165, 283, 19, Ink);
+            DrawGameText("Frutas, cuotas trampa, enemigos y una meta final.", 165, 317, 16, Muted);
             DrawGameText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
             const float difficultyCardWidth = 210.0f;
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
@@ -1359,7 +1483,7 @@ int main()
             DrawGameText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
             DrawGameText("JUGAR  /  ESPACIO", 184, 456, 15, White);
-            DrawGameText("A/D mover  ESPACIO saltar/golpear  W/S escalar  P pausa",
+            DrawGameText("A/D mover  ESPACIO saltar y golpear frutas  ABAJO bajar  W/S escalar",
                      165, 491, 13, Ink);
             DrawGameText(TextFormat("Semillas X  Golpe: -$2000/vida  M sonido  Record: %06d", bestScore),
                      165, 508, 12, Blue);
