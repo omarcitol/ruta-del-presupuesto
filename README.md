@@ -20,8 +20,8 @@ and cannons fire money shots. Dodge them by jumping or stomp enemies from
 above. Your savings seeds can shoot enemies with `X`; shots and hazards stop at
 stage boundaries. Jump into fruit blocks from below to release seeds. Press
 `Down` while standing on a platform to drop through it. Each hit costs one
-life, $2,000, and 18 seconds. Reaching the vault with the most capital
-(balance plus savings) is the goal; running out of lives or money ends the run.
+life, $2,000, and 18 seconds. Reach the vault at the end of the final stage to
+complete the run and rate the game; running out of lives or money ends the run.
 
 Choose Tranquilo, Aventura, or Reto at the title screen with the left/right
 arrows or `1`-`3`. The modes change the starting lives, time limit, and enemy
@@ -32,9 +32,9 @@ The score rewards careful choices, coins, enemy encounters, and remaining time.
 Collected coins add to the available balance; setting money aside changes the
 savings total, so the same money is not counted twice. Spending beyond the
 available balance is shown as debt. After winning or losing, players can rate
-the experience from 1 to 5 or press `Enter` to skip. The best score and
-anonymous ratings are stored locally on the device; they are not uploaded or
-shared online. All money in the game is fictional.
+the experience from 1 to 5 upon reaching the vault, or after a loss; press `Enter`
+to skip. The best score and anonymous ratings are stored locally on the device;
+they are not uploaded or shared online. All money in the game is fictional.
 
 ## Controls
 

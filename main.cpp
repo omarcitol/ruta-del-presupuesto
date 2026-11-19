@@ -17,6 +17,7 @@ constexpr int ScreenHeight = 600;
 constexpr float GroundY = 500.0f;
 constexpr float LevelWidth = 2000.0f;
 constexpr float WorldWidth = LevelWidth * 3.0f;
+constexpr float VaultX = WorldWidth - 180.0f;
 constexpr float PlayerWidth = 34.0f;
 constexpr float PlayerHeight = 48.0f;
 constexpr int LevelCount = 3;
@@ -610,7 +611,7 @@ void DrawWorld(float cameraX, int nextDecision, const std::vector<Coin> &coins,
         DrawGameText("?", static_cast<int>(x - 4), 382, 14, DeepBlue);
     }
 
-    const float vaultX = WorldWidth - 180.0f - cameraX;
+    const float vaultX = VaultX - cameraX;
     DrawRectangleRounded({vaultX, 390, 108, 110}, 0.12f, 8, DeepBlue);
     DrawRectangleRounded({vaultX + 13, 404, 82, 82}, 0.2f, 8, Gold);
     DrawCircleLines(static_cast<int>(vaultX + 54), 445, 27, DeepBlue);
@@ -781,7 +782,7 @@ int main()
         IsSoundValid(pickupSound) && IsSoundValid(hitSound);
     bool muted = false;
 
-    enum class Screen { Title, Playing, Paused, Decision, Feedback, LevelComplete, Finished, GameOver, Rating };
+    enum class Screen { Title, Playing, Paused, Decision, Feedback, LevelComplete, GameOver, Rating };
     Screen screen = Screen::Title;
     int selectedDifficulty = 1;
     std::vector<Coin> coins = MakeCoins();
@@ -823,6 +824,7 @@ int main()
     float dropThroughPlatformY = -1.0f;
     bool timedOut = false;
     bool bankrupt = false;
+    bool completedRun = false;
 
     auto playSound = [&](Sound sound) {
         if (soundAvailable && !muted && IsSoundValid(sound)) PlaySound(sound);
@@ -874,6 +876,7 @@ int main()
         dropThroughPlatformY = -1.0f;
         timedOut = false;
         bankrupt = false;
+        completedRun = false;
     };
 
     auto loseLife = [&]() {
@@ -1331,13 +1334,18 @@ int main()
                         screen = Screen::Decision;
                     }
 
-                    if (screen == Screen::Playing && player.x >= (level + 1) * LevelWidth - 60.0f)
+                    const bool reachedGoal = level == LevelCount - 1
+                        ? player.x + player.width >= VaultX
+                        : player.x >= (level + 1) * LevelWidth - 60.0f;
+                    if (screen == Screen::Playing && reachedGoal)
                     {
                         if (level == 2)
                         {
                             const int timeBonus = static_cast<int>(remainingTime) * 5;
                             score += timeBonus;
-                            screen = Screen::Finished;
+                            completedRun = true;
+                            submittedRating = 0;
+                            screen = Screen::Rating;
                             saveRecord();
                         }
                         else
@@ -1429,7 +1437,7 @@ int main()
                                  0.0f, WorldWidth - ScreenWidth);
             screen = Screen::Playing;
         }
-        else if ((screen == Screen::Finished || screen == Screen::GameOver) &&
+        else if (screen == Screen::GameOver &&
                  (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)))
         {
             submittedRating = 0;
@@ -1536,22 +1544,6 @@ int main()
                      305, 304, 17, Ink);
             DrawGameText("Presiona P para continuar", 305, 344, 16, Muted);
         }
-        else if (screen == Screen::Finished)
-        {
-            DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 195});
-            DrawRectangleRounded({150, 112, 700, 380}, 0.05f, 14, Paper);
-            DrawRectangle(150, 112, 700, 13, Gold);
-            DrawGameText("META ALCANZADA / FONDO FUTURO", 205, 150, 18, LeafGreen);
-            DrawGameText("Tu plan llego", 205, 192, 40, DeepBlue);
-            DrawGameText("mas lejos que la deuda.", 205, 235, 40, DeepBlue);
-            DrawGameText(TextFormat("CAPITAL FINAL: $%d  (saldo $%d + ahorro $%d)",
-                                    balance + savings, balance, savings),
-                         205, 302, 20, Ink);
-            DrawGameText(TextFormat("Puntos: %06d     Tiempo restante: %d s", score,
-                                static_cast<int>(remainingTime)), 205, 340, 18, Blue);
-            DrawGameText(TextFormat("Record local: %06d", bestScore), 205, 373, 17, Red);
-            DrawGameText("ENTER para calificar la experiencia", 205, 427, 16, Muted);
-        }
         else if (screen == Screen::GameOver)
         {
             const int finalCapital = balance + savings;
@@ -1566,25 +1558,42 @@ int main()
         else if (screen == Screen::Rating)
         {
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 190});
-            DrawRectangleRounded({190, 150, 620, 300}, 0.05f, 14, Paper);
-            DrawRectangle(190, 150, 620, 12, Gold);
-            DrawGameText("CALIFICA LA EXPERIENCIA", 240, 191, 20, Red);
+            DrawRectangleRounded({190, 126, 620, 348}, 0.05f, 14, Paper);
+            DrawRectangle(190, 126, 620, 12, Gold);
+            DrawGameText(completedRun ? "META ALCANZADA / CALIFICA" : "CALIFICA LA EXPERIENCIA",
+                         240, 165, 20, completedRun ? LeafGreen : Red);
             if (submittedRating == 0)
             {
-                DrawGameText("Que tan entretenida fue la aventura?", 240, 240, 22, DeepBlue);
-                DrawGameText("1-5 para calificar; ENTER para omitir. Es anonima.", 240, 286, 16, Ink);
-                DrawGameText("1   2   3   4   5", 240, 333, 30, Gold);
+                if (completedRun)
+                {
+                    DrawGameText(TextFormat("Capital final: $%d  /  Puntos: %06d",
+                                             balance + savings, score),
+                                 240, 205, 17, Ink);
+                    DrawGameText("Que tan entretenida fue la aventura?", 240, 250, 21, DeepBlue);
+                    DrawGameText("Pulsa 1-5 para calificar; ENTER para omitir.", 240, 294, 16, Ink);
+                    DrawGameText("1   2   3   4   5", 240, 337, 30, Gold);
+                }
+                else
+                {
+                    DrawGameText("Que tan entretenida fue la aventura?", 240, 240, 22, DeepBlue);
+                    DrawGameText("1-5 para calificar; ENTER para omitir. Es anonima.", 240, 286, 16, Ink);
+                    DrawGameText("1   2   3   4   5", 240, 333, 30, Gold);
+                }
             }
             else
             {
-                DrawGameText("Gracias por valorar el prototipo.", 240, 240, 22, DeepBlue);
-                DrawGameText(TextFormat("Respuestas en este equipo: %d", ratingCount), 240, 289, 17, Ink);
+                DrawGameText("Gracias por valorar el prototipo.", 240, 214, 22, DeepBlue);
+                if (completedRun)
+                    DrawGameText(TextFormat("Capital final: $%d  /  Puntos: %06d",
+                                             balance + savings, score),
+                                 240, 251, 16, Ink);
+                DrawGameText(TextFormat("Respuestas en este equipo: %d", ratingCount), 240, 290, 17, Ink);
                 DrawGameText(TextFormat("Promedio: %.1f / 5",
                                     ratingCount > 0 ? static_cast<float>(ratingTotal) / ratingCount : 0.0f),
-                         240, 323, 19, LeafGreen);
+                         240, 324, 19, LeafGreen);
                 if (records.storageError)
-                    DrawGameText("No se pudo actualizar el archivo de resultados.", 240, 350, 13, Red);
-                DrawGameText("ENTER para volver al inicio", 240, 377, 16, Muted);
+                    DrawGameText("No se pudo actualizar el archivo de resultados.", 240, 351, 13, Red);
+                DrawGameText("ENTER para volver al inicio", 240, 382, 16, Muted);
             }
         }
         EndDrawing();
