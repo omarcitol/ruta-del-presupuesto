@@ -34,21 +34,29 @@ const Color Ink = {35, 44, 58, 255};
 const Color Muted = {98, 108, 121, 255};
 const Color White = {255, 255, 250, 255};
 
-#if defined(PLATFORM_WEB)
 Font GameFont = {};
-#endif
 
 void DrawGameText(const char *text, int x, int y, int fontSize, Color color)
 {
-#if defined(PLATFORM_WEB)
     if (GameFont.texture.id != 0)
     {
         DrawTextEx(GameFont, text, {static_cast<float>(x), static_cast<float>(y)},
                    static_cast<float>(fontSize), 0.0f, color);
+        if (fontSize >= 14)
+        {
+            DrawTextEx(GameFont, text, {static_cast<float>(x + 1), static_cast<float>(y)},
+                       static_cast<float>(fontSize), 0.0f, color);
+            DrawTextEx(GameFont, text, {static_cast<float>(x), static_cast<float>(y + 1)},
+                       static_cast<float>(fontSize), 0.0f, color);
+        }
         return;
     }
-#endif
     ::DrawText(text, x, y, fontSize, color);
+    if (fontSize >= 14)
+    {
+        ::DrawText(text, x + 1, y, fontSize, color);
+        ::DrawText(text, x, y + 1, fontSize, color);
+    }
 }
 
 struct Platform {
@@ -739,6 +747,21 @@ int main()
                           fontCodepoints.data(), static_cast<int>(fontCodepoints.size()));
     if (GameFont.texture.id == 0)
         TraceLog(LOG_WARNING, "Could not load the browser font; using raylib's default font.");
+    else
+        SetTextureFilter(GameFont.texture, TEXTURE_FILTER_BILINEAR);
+#else
+    std::vector<int> fontCodepoints;
+    for (int codepoint = 32; codepoint <= 126; ++codepoint)
+        fontCodepoints.push_back(codepoint);
+    for (int codepoint = 160; codepoint <= 255; ++codepoint)
+        fontCodepoints.push_back(codepoint);
+    GameFont = LoadFontEx("assets/fonts/AtkinsonHyperlegible-Regular.ttf", 48,
+                          fontCodepoints.data(), static_cast<int>(fontCodepoints.size()));
+    if (GameFont.texture.id == 0)
+        GameFont = LoadFontEx("../assets/fonts/AtkinsonHyperlegible-Regular.ttf", 48,
+                              fontCodepoints.data(), static_cast<int>(fontCodepoints.size()));
+    if (GameFont.texture.id == 0)
+        TraceLog(LOG_WARNING, "Could not load the desktop font; using raylib's default font.");
     else
         SetTextureFilter(GameFont.texture, TEXTURE_FILTER_BILINEAR);
 #endif
