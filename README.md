@@ -23,9 +23,8 @@ stage boundaries. Jump into fruit blocks from below to release seeds. Press
 life, $2,000, and 18 seconds. Reach the vault at the end of the final stage to
 complete the run and rate the game; running out of lives or money ends the run.
 
-Choose Tranquilo, Aventura, or Reto at the title screen with the left/right
-arrows or `1`-`3`. The modes change the starting lives, time limit, and enemy
-speed; enemies get faster in each stage. A hit costs 250 points and 18 seconds,
+The game has one fixed mode: Aventura, with 180 seconds and three starting
+lives. Enemies get faster in each stage. A hit costs 250 points and 18 seconds,
 and losing all lives or running out of time ends the run. Press `P` to pause.
 
 The score rewards careful choices, coins, enemy encounters, and remaining time.
@@ -48,8 +47,7 @@ All money in the game is fictional.
 - Drop through a platform: `Down` while standing on it
 - Pause/resume: `P`
 - Continue: `Enter`
-- Start a difficulty: click its card or press `1`-`3`; `Space` starts the selected one
-- Select title-screen difficulty: left/right arrows
+- Start Aventura: click `JUGAR`, press `Space`, or press `Enter`
 - Toggle sound: `M`
 - Close the game: `Esc`
 
@@ -71,9 +69,9 @@ build.bat
 
 ## Play in the browser
 
-Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Click a difficulty
-card or press `1`-`3` to start immediately, or press `Space` to start the
-selected difficulty. Decision cards also respond to a click, so no extra
+Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Click the
+Aventura card or `JUGAR`, or press `Space`/`Enter` to start. Decision cards
+also respond to a click, so no extra
 confirmation key is needed. The web version uses a readable font and a clean,
 responsive full-screen page.
 

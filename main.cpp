@@ -45,6 +45,7 @@ Font GameFont = {};
 
 void DrawGameText(const char *text, int x, int y, int fontSize, Color color)
 {
+    // El segundo y tercer trazo refuerzan la fuente incluida sin perder legibilidad.
     if (GameFont.texture.id != 0)
     {
         DrawTextEx(GameFont, text, {static_cast<float>(x), static_cast<float>(y)},
@@ -149,7 +150,7 @@ struct Records {
     bool storageError = false;
 };
 
-struct DifficultySettings {
+struct GameModeSettings {
     const char *name;
     const char *description;
     float duration;
@@ -157,10 +158,8 @@ struct DifficultySettings {
     float enemySpeed;
 };
 
-const DifficultySettings Difficulties[] = {
-    {"TRANQUILO", "210 s / 4 vidas / enemigos moderados", 210.0f, 4, 0.85f},
-    {"AVENTURA", "180 s / 3 vidas / enemigos mas veloces", 180.0f, 3, 1.15f},
-    {"RETO", "150 s / 2 vidas / enemigos muy veloces", 150.0f, 2, 1.45f}
+const GameModeSettings AdventureMode = {
+    "AVENTURA", "180 s / 3 vidas / enemigos mas veloces", 180.0f, 3, 1.15f
 };
 
 const char *const StageNames[LevelCount] = {
@@ -173,6 +172,7 @@ const char *const StageLessons[LevelCount] = {
     "Prepara un fondo y protege tu meta."
 };
 
+// Prepara los 15 retos y mezcla cada nivel y sus tres respuestas al iniciar la partida.
 std::vector<Decision> MakeDecisions()
 {
     std::vector<Decision> decisions = {
@@ -243,6 +243,7 @@ std::vector<Decision> MakeDecisions()
         4220, 4580, 5040, 5420, 5630
     };
     std::mt19937 generator(static_cast<unsigned int>(GetRandomValue(1, 2147483647)));
+    // Se mezclan los retos dentro de cada nivel y luego sus opciones con sus consecuencias.
     for (std::size_t stage = 0; stage < LevelCount; ++stage)
     {
         const auto first = decisions.begin() +
@@ -390,6 +391,7 @@ std::string GetRecordsPath()
     return std::string(GetApplicationDirectory()) + "ruta-presupuesto-record.dat";
 }
 
+// Recupera el récord y las valoraciones guardadas localmente entre partidas.
 Records LoadRecords()
 {
     Records records;
@@ -826,10 +828,9 @@ int main()
 
     enum class Screen { Title, Playing, Paused, Decision, Feedback, LevelComplete, GameOver, Rating };
     Screen screen = Screen::Title;
-    int selectedDifficulty = 1;
     std::vector<Coin> coins = MakeCoins();
     std::vector<PowerUp> powerUps = MakePowerUps();
-    std::vector<Enemy> enemies = MakeEnemies(Difficulties[selectedDifficulty].enemySpeed);
+    std::vector<Enemy> enemies = MakeEnemies(AdventureMode.enemySpeed);
     std::vector<Projectile> projectiles;
     std::vector<HazardProjectile> hazardProjectiles;
     std::vector<QuestionBlock> questionBlocks = MakeQuestionBlocks();
@@ -838,7 +839,7 @@ int main()
     Vector2 velocity = {0, 0};
     float cameraX = 0;
     float walkTime = 0;
-    float remainingTime = Difficulties[selectedDifficulty].duration;
+    float remainingTime = AdventureMode.duration;
     float shieldTime = 0;
     float invulnerabilityTime = 0;
     float shotCooldown = 0;
@@ -849,7 +850,7 @@ int main()
     int bestScore = records.bestScore;
     int ratingCount = records.ratingCount;
     int ratingTotal = records.ratingTotal;
-    int lives = Difficulties[selectedDifficulty].startingLives;
+    int lives = AdventureMode.startingLives;
     int ammo = 0;
     int level = 0;
     int nextDecision = 0;
@@ -881,11 +882,12 @@ int main()
         }
     };
 
+    // Reinicia el estado de juego y genera una nueva combinación de retos.
     auto resetRun = [&]() {
         Decisions = MakeDecisions();
         coins = MakeCoins();
         powerUps = MakePowerUps();
-        enemies = MakeEnemies(Difficulties[selectedDifficulty].enemySpeed);
+        enemies = MakeEnemies(AdventureMode.enemySpeed);
         projectiles.clear();
         hazardProjectiles.clear();
         questionBlocks = MakeQuestionBlocks();
@@ -894,14 +896,14 @@ int main()
         velocity = {0, 0};
         cameraX = 0;
         walkTime = 0;
-        remainingTime = Difficulties[selectedDifficulty].duration;
+        remainingTime = AdventureMode.duration;
         shieldTime = 0;
         invulnerabilityTime = 0;
         shotCooldown = 0;
         balance = 12000;
         savings = 0;
         score = 0;
-        lives = Difficulties[selectedDifficulty].startingLives;
+        lives = AdventureMode.startingLives;
         ammo = 0;
         level = 0;
         nextDecision = 0;
@@ -921,6 +923,7 @@ int main()
         completedRun = false;
     };
 
+    // Aplica la penalización común a los golpes y a las respuestas-trampa.
     auto loseLife = [&]() {
         --lives;
         balance -= 2000;
@@ -953,30 +956,11 @@ int main()
 
         if (screen == Screen::Title)
         {
-            if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A))
-                selectedDifficulty = std::max(0, selectedDifficulty - 1);
-            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D))
-                selectedDifficulty = std::min(static_cast<int>(std::size(Difficulties)) - 1,
-                                              selectedDifficulty + 1);
             const Vector2 mouse = GetMousePosition();
             bool startGame = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) ||
                 (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                 CheckCollisionPointRec(mouse, {165, 443, 248, 42}));
-            for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
-            {
-                if (IsKeyPressed(static_cast<KeyboardKey>(KEY_ONE + i)))
-                {
-                    selectedDifficulty = i;
-                    startGame = true;
-                }
-                const Rectangle bounds = {165.0f + i * 222.0f, 374, 210, 38};
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                    CheckCollisionPointRec(mouse, bounds))
-                {
-                    selectedDifficulty = i;
-                    startGame = true;
-                }
-            }
+                 (CheckCollisionPointRec(mouse, {165, 374, 360, 52}) ||
+                  CheckCollisionPointRec(mouse, {165, 443, 248, 42})));
             if (startGame)
             {
                 resetRun();
@@ -1247,8 +1231,7 @@ int main()
                                     enemy.jumps ? -350.0f - enemyLevel * 25.0f : 0.0f,
                                     enemy.jumps ? 680.0f : 0.0f, true, enemyLevel});
                                 enemy.shotCooldown = std::max(1.0f,
-                                    2.3f - enemyLevel * 0.35f -
-                                    (selectedDifficulty == 2 ? 0.25f : 0.0f));
+                                    2.3f - enemyLevel * 0.35f);
                             }
                         }
                     }
@@ -1267,8 +1250,7 @@ int main()
                                 directionToPlayer * (245.0f + level * 30.0f),
                                 0.0f, 0.0f, true, level});
                             cannon.shotCooldown = std::max(0.9f,
-                                2.6f - level * 0.45f -
-                                (selectedDifficulty == 2 ? 0.3f : 0.0f));
+                                2.6f - level * 0.45f);
                         }
                     }
 
@@ -1426,6 +1408,7 @@ int main()
                 const int oldBalance = balance;
                 const int oldSavings = savings;
                 const int savingsChange = decision.savingsChange[selectedOption];
+                // Los gastos salen primero del ahorro reservado; solo el faltante afecta el saldo.
                 if (savingsChange < 0)
                 {
                     const int requested = -savingsChange;
@@ -1457,7 +1440,7 @@ int main()
                         const float enemyX = std::min(player.x + 240.0f, WorldWidth - 100.0f);
                         enemies.push_back({{enemyX, GroundY - 30, 34, 30},
                                            enemyX - 60, enemyX + 100,
-                                           -110.0f * Difficulties[selectedDifficulty].enemySpeed,
+                                           -110.0f * AdventureMode.enemySpeed,
                                            true});
                     }
                     if (screen != Screen::GameOver)
@@ -1519,6 +1502,7 @@ int main()
                             records.storageError = true;
                     }
 #if defined(PLATFORM_WEB)
+                    // El navegador envía solo la calificación al formulario anónimo configurado en web/index.html.
                     EM_ASM({
                         if (typeof window.submitGameRating === "function")
                             window.submitGameRating($0);
@@ -1562,28 +1546,17 @@ int main()
             DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
             DrawGameText("15 retos aleatorios con tres opciones cada uno.", 165, 283, 19, Ink);
             DrawGameText("Cuidado: hay cargos ocultos, fraudes y trampas.", 165, 317, 16, Muted);
-            DrawGameText("ELIGE TU MODO DE AVENTURA", 165, 350, 14, Red);
+            DrawGameText("MODO AVENTURA", 165, 350, 14, Red);
             DrawCircle(770, 218, 48, Color{255, 197, 66, 100});
             DrawCircle(770, 218, 34, Gold);
             DrawGameText("$", 762, 202, 25, DeepBlue);
             DrawPlayer({728, 258, PlayerWidth, PlayerHeight}, true, 0, false);
             DrawGameText("15 RETOS", 716, 330, 14, DeepBlue);
-            const float difficultyCardWidth = 210.0f;
-            for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
-            {
-                const float x = 165.0f + i * (difficultyCardWidth + 12.0f);
-                const Rectangle bounds = {x, 374, difficultyCardWidth, 38};
-                DrawRectangleRounded(bounds, 0.16f, 7,
-                                     i == selectedDifficulty ? DeepBlue : Color{231, 234, 224, 255});
-                if (i == selectedDifficulty)
-                    DrawRectangleRoundedLinesEx(bounds, 0.16f, 7, 3, Gold);
-                DrawGameText(TextFormat("%d  %s  /  JUGAR", i + 1, Difficulties[i].name),
-                         static_cast<int>(x + 16), 385, 15,
-                         i == selectedDifficulty ? White : Ink);
-            }
-            DrawGameText(TextFormat("%s%s", selectedDifficulty == 1 ? "MODO AVENTURA / " : "",
-                                    Difficulties[selectedDifficulty].description),
-                         165, 420, 14, Muted);
+            const Rectangle adventureCard = {165, 374, 360, 52};
+            DrawRectangleRounded(adventureCard, 0.16f, 7, DeepBlue);
+            DrawRectangleRoundedLinesEx(adventureCard, 0.16f, 7, 3, Gold);
+            DrawGameText("AVENTURA  /  180 S  /  3 VIDAS", 184, 389, 17, White);
+            DrawGameText("Enemigos mas veloces; tres niveles.", 165, 426, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
             DrawGameText("JUGAR  /  ESPACIO", 184, 456, 15, White);
             DrawGameText("A/D mover  ESPACIO saltar y golpear frutas  ABAJO bajar  W/S escalar",
@@ -1612,7 +1585,7 @@ int main()
             DrawRectangle(250, 210, 500, 12, Gold);
             DrawGameText("PAUSA", 305, 255, 36, DeepBlue);
             DrawGameText(TextFormat("%s  /  %s", StageNames[level],
-                                Difficulties[selectedDifficulty].name),
+                                AdventureMode.name),
                      305, 304, 17, Ink);
             DrawGameText("Presiona P para continuar", 305, 344, 16, Muted);
         }
