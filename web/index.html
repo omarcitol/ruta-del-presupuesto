@@ -57,6 +57,20 @@
     const canvas = document.getElementById("canvas");
     const loading = document.getElementById("loading");
     const gameShell = document.getElementById("game-shell");
+    window.submitGameRating = (rating) => {
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        console.error("Invalid game rating; expected an integer from 1 to 5.");
+        return;
+      }
+      const body = new URLSearchParams({ "entry.1411779869": String(rating) });
+      fetch("https://docs.google.com/forms/d/e/1FAIpQLSet3XlT92RFc84tNnBzcfdrSUlO59xzuR6hC3hPIj2D5Brbag/formResponse", {
+        method: "POST",
+        mode: "no-cors",
+        credentials: "omit",
+        keepalive: true,
+        body
+      }).catch((error) => console.error("Google Forms rating submission failed:", error));
+    };
     const fitGame = () => {
       const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 600);
       gameShell.style.setProperty("--game-scale", scale);

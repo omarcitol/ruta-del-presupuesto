@@ -10,6 +10,10 @@
 #include <string>
 #include <vector>
 
+#if defined(PLATFORM_WEB)
+#include <emscripten.h>
+#endif
+
 namespace {
 
 constexpr int ScreenWidth = 1000;
@@ -1464,6 +1468,14 @@ int main()
                         if (!records.storageError && !SaveRecords(records))
                             records.storageError = true;
                     }
+#if defined(PLATFORM_WEB)
+                    EM_ASM({
+                        if (typeof window.submitGameRating === "function")
+                            window.submitGameRating($0);
+                        else
+                            console.error("Google Forms rating submission is unavailable.");
+                    }, value);
+#endif
                     break;
                 }
             }
@@ -1593,7 +1605,12 @@ int main()
                          240, 324, 19, LeafGreen);
                 if (records.storageError)
                     DrawGameText("No se pudo actualizar el archivo de resultados.", 240, 351, 13, Red);
-                DrawGameText("ENTER para volver al inicio", 240, 382, 16, Muted);
+#if defined(PLATFORM_WEB)
+                DrawGameText("Enviando valoracion anonima a Google Forms.", 240, 355, 14, Blue);
+#else
+                DrawGameText("Valoracion guardada en este dispositivo.", 240, 355, 14, Blue);
+#endif
+                DrawGameText("ENTER para volver al inicio", 240, 397, 16, Muted);
             }
         }
         EndDrawing();

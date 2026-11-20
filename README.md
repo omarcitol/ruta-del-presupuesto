@@ -34,7 +34,8 @@ savings total, so the same money is not counted twice. Spending beyond the
 available balance is shown as debt. After winning or losing, players can rate
 the experience from 1 to 5 upon reaching the vault, or after a loss; press `Enter`
 to skip. The best score and anonymous ratings are stored locally on the device;
-they are not uploaded or shared online. All money in the game is fictional.
+the browser version also submits ratings anonymously to the linked Google Form.
+All money in the game is fictional.
 
 ## Controls
 
