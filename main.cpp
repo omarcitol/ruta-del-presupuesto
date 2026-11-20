@@ -25,6 +25,8 @@ constexpr float VaultX = WorldWidth - 180.0f;
 constexpr float PlayerWidth = 34.0f;
 constexpr float PlayerHeight = 48.0f;
 constexpr int LevelCount = 3;
+constexpr int DecisionsPerStage = 5;
+constexpr int DecisionCount = LevelCount * DecisionsPerStage;
 
 const Color DeepBlue = {26, 42, 75, 255};
 const Color NightBlue = {24, 37, 64, 255};
@@ -132,11 +134,12 @@ struct Decision {
     float x;
     const char *title;
     const char *question;
-    const char *options[2];
-    const char *feedback[2];
-    int balanceChange[2];
-    int savingsChange[2];
-    bool risky[2];
+    const char *options[3];
+    const char *feedback[3];
+    int balanceChange[3];
+    int savingsChange[3];
+    bool risky[3];
+    bool losesLife[3];
 };
 
 struct Records {
@@ -173,61 +176,92 @@ const char *const StageLessons[LevelCount] = {
 std::vector<Decision> MakeDecisions()
 {
     std::vector<Decision> decisions = {
-        {0, "BARRIO / COMPRA", "Efectivo $4.800 o 6 cuotas y $500 de apertura?",
-         {"Pagas $4.800 al contado", "Pagas $800 x 6 y $500 de apertura"},
-         {"El total al contado es menor que financiarlo.", "Las cuotas suman $5.300; faltaba la apertura."},
-         {-4800, -5300}, {0, 0}, {false, true}},
-        {0, "BARRIO / IMPREVISTO", "Un gasto urgente cuesta $1.800. Tienes ahorro.",
-         {"Usas $1.500 del fondo y ajustas $300", "Lo cargas a credito: total $2.300"},
-         {"El fondo cubre parte; completas solo lo necesario.", "La urgencia cuesta $500 mas al financiarla."},
-         {-300, -2300}, {-1500, 0}, {false, true}},
-        {0, "BARRIO / PRESUPUESTO", "Tienes $5.000; comida y pasaje cuestan $3.200.",
-         {"Cubres lo fijo y guardas $700", "Gastas primero; luego ves que queda"},
-         {"Priorizaste lo necesario y separaste una parte.", "Los gastos sin plan dejaron menos margen."},
-         {-3900, -4800}, {700, 0}, {false, true}},
-        {0, "CUOTAS / COSTO REAL", "Precio contado $4.500. Cuotas: 4 x $1.100 + $600.",
-         {"Pagas $4.500 al contado", "Tomas las cuotas: suman $5.000"},
-         {"Revisar el total evita pagar $500 de mas.", "La cuota parecia baja; el total era $5.000."},
-         {-4500, -5000}, {0, 0}, {false, true}},
-        {0, "CUOTAS / PRESTAMO", "Te prestan $3.000; debes devolver $3.900.",
-         {"Pides solo $500 y renegocias el resto", "Aceptas $3.000 por salir del apuro"},
-         {"Reducir el prestamo limita el costo futuro.", "El apuro agrega $900; no preguntaste el total."},
-         {-500, -3900}, {0, 0}, {false, true}},
-        {0, "CUOTAS / MATERIALES", "Materiales: $2.000. 10% al contado; cuotas y extras: $2.700.",
-         {"Pagas $1.800; no compras extras", "Aceptas cuotas y agregas $700 en extras"},
-         {"El descuento sirve si respetas la compra prevista.", "Los extras y cargos borraron el descuento."},
-         {-1800, -2700}, {0, 0}, {false, true}},
-        {0, "MERCADO / LETRA PEQUENA", "Oferta: $900 x 8 + $1.200 inicial + seguro $150 x 8.",
-         {"Rechazas; buscas opcion de $8.400", "Firmas: cuotas, inicial y seguro"},
-         {"Sumar cuotas, inicial y seguro revela el costo real.", "La letra pequena subio el total a $9.600."},
-         {-8400, -9600}, {0, 0}, {false, true}},
-        {0, "MERCADO / PROMESA", "Prometen 30% semanal si transfieres $2.500 hoy.",
-         {"Verificas la entidad; no transfieres aun", "Pruebas con $2.500 de tu ahorro"},
-         {"Una promesa no prueba que la inversion sea segura.", "Sin verificar, arriesgaste dinero que podia perderse."},
-         {0, 0}, {0, -2500}, {false, true}},
-        {0, "MERCADO / META", "Ahorro $4.000; gasto $1.200 o credito total $2.500.",
-         {"Usas el fondo y reajustas la fecha de tu meta", "Pides $2.000 prestados para no tocar la meta"},
-         {"El fondo cumple su funcion; luego retomas la meta.", "La deuda cuesta $2.500 y no hace desaparecer el gasto."},
-         {0, -2500}, {-1200, 0}, {false, true}}
+        {0, "BARRIO / OFERTA", "Un celular cuesta $4.000. La oferta vence hoy. Que haces?",
+         {"Esperas y comparas antes de pagar", "Aceptas 6 cuotas de $750", "Depositas $1.000 por un enlace de reserva"},
+         {"Comparar precios evita comprar bajo presion.", "Las cuotas suman $4.500: pagas $500 extra.", "El enlace falso se llevo el adelanto; perdiste una vida."},
+         {0, -4500, -1000}, {0, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "BARRIO / IMPREVISTO", "La bicicleta necesita una reparacion de $1.500.",
+         {"Usas $1.200 del fondo y ajustas $300", "Pides prestado; devuelves $2.200", "Ignoras el freno y sigues manejando"},
+         {"El fondo cubre casi todo y limitas la deuda.", "El apuro te costo $700 mas que reparar.", "El freno fallo: pierdes una vida y $2.000."},
+         {-300, -2200, 0}, {-1200, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "BARRIO / QUINCENA", "Tienes $6.000 disponibles y tus gastos necesarios suman $3.800.",
+         {"Pagas lo necesario y guardas $700", "Gastas primero en antojos y luego pagas", "Pagas $800 para entrar a un grupo que duplica dinero"},
+         {"Cubres lo basico y separas dinero para tu meta.", "Los gastos impulsivos dejaron menos para lo necesario.", "El grupo desaparecio con el adelanto; pierdes una vida."},
+         {-4500, -5500, -800}, {700, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "BARRIO / SUSCRIPCION", "Una aplicacion cobra $400 al mes y ya no la usas.",
+         {"Cancelas hoy y revisas el proximo cobro", "La dejas activa por seis meses", "Pides reembolso desde un enlace que te enviaron"},
+         {"Cancelar a tiempo evita pagos que no necesitas.", "Pagaste $2.400 por un servicio que no usaste.", "El enlace robo tus datos y te costo una vida."},
+         {0, -2400, -500}, {0, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "BARRIO / VENTA", "Vendes una consola que ya no usas.",
+         {"Entregas en persona despues de confirmar el pago", "Aceptas un cheque y das el equipo antes de cobrar", "Vendes rapido por $900 en efectivo"},
+         {"Confirmar el deposito protege tu dinero y el equipo.", "El cheque reboto y perdiste el equipo; una vida menos.", "Ganaste menos, pero recibiste un pago comprobable."},
+         {1500, -1200, 900}, {0, 0, 0}, {false, true, false}, {false, true, false}},
+        {0, "CUOTAS / COSTO REAL", "Contado $4.500; cuotas 4 x $1.100 mas $600 de apertura.",
+         {"Pagas $4.500 al contado", "Aceptas las cuotas: total $5.000", "Pagas $500 a un gestor para quitar la apertura"},
+         {"Comparaste el total y evitas cargos extra.", "La cuota parecia baja, pero sumaba $500 mas.", "El gestor no podia borrar cargos; pierdes el adelanto."},
+         {-4500, -5000, -500}, {0, 0, 0}, {false, true, true}, {false, false, false}},
+        {0, "CUOTAS / PRESTAMO", "Te ofrecen $3.000 y debes devolver hasta $3.900.",
+         {"Pides solo lo necesario y negocias el plazo", "Aceptas $3.000 sin revisar el total", "Pagas $300 por adelantado para que aprueben el prestamo"},
+         {"Pedir menos y negociar limita el costo futuro.", "El apuro agrego $900 de deuda.", "La aprobacion era falsa: pierdes una vida y $2.000."},
+         {-500, -3900, -300}, {0, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "CUOTAS / TARJETA", "Debes $2.000 en la tarjeta. El minimo es $200.",
+         {"Pagas el total y evitas nuevos intereses", "Pagas el minimo; se agregan $400", "Pides un avance para cubrir otra deuda"},
+         {"Liquidar la deuda evita intereses futuros.", "El pago minimo dejo $400 adicionales por pagar.", "El avance cobro cargos y empeoro la deuda."},
+         {-2000, -600, -900}, {0, 0, 0}, {false, true, true}, {false, false, false}},
+        {0, "CUOTAS / MATERIALES", "Materiales cuestan $2.000; al contado hay 10% de descuento.",
+         {"Compras solo lo necesario por $1.800", "Aceptas cuotas y extras por $2.700", "Buscas otra tienda y consigues $1.600"},
+         {"El descuento sirve porque mantuviste la compra prevista.", "Los cargos y extras borraron el descuento.", "Comparar tiendas te ahorro $400."},
+         {-1800, -2700, -1600}, {0, 0, 0}, {false, true, false}, {false, false, false}},
+        {0, "CUOTAS / PAGO DIFERIDO", "Un electrodomestico cuesta $2.000 o $2.400 a plazo.",
+         {"Esperas y ahorras para pagarlo sin recargo", "Lo financias y aceptas el total de $2.400", "Pagas $500 en una pagina de preventa"},
+         {"Esperar evita convertir una compra en deuda.", "El pago diferido agrego $400 al total.", "La preventa era falsa: pierdes el anticipo."},
+         {0, -2400, -500}, {0, 0, 0}, {false, true, true}, {false, false, false}},
+        {0, "MERCADO / PROMESA", "Un anuncio promete ganar 30% cada semana.",
+         {"Verificas la entidad antes de invertir", "Pruebas con $1.000 en una opcion regulada", "Transfieres $2.500 hoy para asegurar la ganancia"},
+         {"Una promesa no demuestra que la inversion sea segura.", "Invertir tiene riesgos; diversificar limita la perdida.", "La oferta era un fraude: pierdes una vida y $2.000."},
+         {0, -1000, -2500}, {0, 1100, 0}, {false, false, true}, {false, false, true}},
+        {0, "MERCADO / CODIGO", "Alguien dice ser del banco y te pide el codigo que llego al celular.",
+         {"Cuelgas y llamas al numero oficial del banco", "Compartes el codigo para bloquear un cargo", "Instalas una app para que te ayuden a proteger la cuenta"},
+         {"El banco no necesita que compartas codigos de acceso.", "El codigo permitio un cargo no autorizado.", "La app dio acceso a tu cuenta: pierdes una vida y dinero."},
+         {0, -1200, -500}, {0, 0, 0}, {false, true, true}, {false, false, true}},
+        {0, "MERCADO / META", "Tienes $4.000 ahorrados y surge un gasto necesario de $1.200.",
+         {"Usas el fondo y reajustas la fecha de tu meta", "Pides credito por $2.500 para no tocar el ahorro", "Retiras todo el ahorro para una oferta que vence hoy"},
+         {"El fondo cumple su funcion; luego retomas la meta.", "La deuda cuesta mas y no elimina el gasto.", "La oferta no existia: pierdes una vida y parte del fondo."},
+         {0, -2500, 0}, {-1200, 0, -2000}, {false, true, true}, {false, false, true}},
+        {0, "MERCADO / VENTA SEGURA", "Vendes una laptop por $2.500. El comprador envia un comprobante.",
+         {"Verificas el deposito antes de entregar", "Entregas al ver una captura del pago", "Pagas $400 al supuesto mensajero por adelantado"},
+         {"El dinero confirmado evita entregar sin cobrar.", "La captura era falsa; perdiste la laptop y una vida.", "El mensajero no existia y perdiste el adelanto."},
+         {2500, -1500, -400}, {0, 0, 0}, {false, true, true}, {false, true, false}},
+        {0, "MERCADO / BONO", "Recibes un bono de $2.000. Como lo distribuyes?",
+         {"Guardas $1.500 y usas $500 para una necesidad", "Lo gastas todo en compras no planeadas", "Pagas $600 para desbloquear una inversion garantizada"},
+         {"Separar ahorro y cubrir una necesidad mantiene el plan.", "El bono ayudo hoy, pero no quedo reserva.", "La inversion era una trampa: pierdes una vida y dinero."},
+         {500, 0, 1400}, {1500, 0, 0}, {false, true, true}, {false, false, true}}
     };
-    const float positions[] = {500, 1120, 1730, 2500, 3100, 3700, 4500, 5100, 5750};
+    const float positions[] = {
+        420, 650, 1080, 1420, 1760,
+        2220, 2520, 3010, 3350, 3710,
+        4220, 4580, 5040, 5420, 5630
+    };
     std::mt19937 generator(static_cast<unsigned int>(GetRandomValue(1, 2147483647)));
     for (std::size_t stage = 0; stage < LevelCount; ++stage)
     {
-        const auto first = decisions.begin() + static_cast<std::ptrdiff_t>(stage * 3);
-        std::shuffle(first, first + 3, generator);
+        const auto first = decisions.begin() +
+            static_cast<std::ptrdiff_t>(stage * DecisionsPerStage);
+        std::shuffle(first, first + DecisionsPerStage, generator);
     }
     for (std::size_t i = 0; i < decisions.size(); ++i)
     {
         Decision &decision = decisions[i];
         decision.x = positions[i];
-        if (std::uniform_int_distribution<int>(0, 1)(generator) == 1)
+        for (int option = 2; option > 0; --option)
         {
-            std::swap(decision.options[0], decision.options[1]);
-            std::swap(decision.feedback[0], decision.feedback[1]);
-            std::swap(decision.balanceChange[0], decision.balanceChange[1]);
-            std::swap(decision.savingsChange[0], decision.savingsChange[1]);
-            std::swap(decision.risky[0], decision.risky[1]);
+            const int other = std::uniform_int_distribution<int>(0, option)(generator);
+            std::swap(decision.options[option], decision.options[other]);
+            std::swap(decision.feedback[option], decision.feedback[other]);
+            std::swap(decision.balanceChange[option], decision.balanceChange[other]);
+            std::swap(decision.savingsChange[option], decision.savingsChange[other]);
+            std::swap(decision.risky[option], decision.risky[other]);
+            std::swap(decision.losesLife[option], decision.losesLife[other]);
         }
     }
     return decisions;
@@ -666,7 +700,7 @@ void DrawHud(int balance, int savings, int progress, int score, int bestScore,
     DrawGameText(TextFormat("RECORD %06d", bestScore), 500, 42, 14, Muted);
     DrawGameText(TextFormat("TIEMPO %03d", static_cast<int>(timeLeft)), 720, 12, 16, Red);
     DrawGameText(TextFormat("VIDAS %d   SEMILLAS %d", lives, ammo), 720, 42, 14, Ink);
-    DrawGameText(TextFormat("%d/9", progress), 918, 15, 16, DeepBlue);
+    DrawGameText(TextFormat("%d/%d", progress, DecisionCount), 918, 15, 16, DeepBlue);
     DrawGameText(!soundAvailable ? "SIN AUDIO" : (muted ? "MUDO [M]" : "AUDIO [M]"),
              900, 45, 12, Muted);
 }
@@ -675,30 +709,31 @@ void DrawDecisionCard(int index, int balance, int savings, int score)
 {
     const Decision &decision = Decisions[index];
     DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 185});
-    DrawRectangleRounded({135, 112, 730, 386}, 0.05f, 12, Paper);
-    DrawRectangle(135, 112, 730, 12, Red);
-    DrawGameText(decision.title, 180, 145, 18, Red);
-    DrawGameText(decision.question, 180, 179, 20, Ink);
+    DrawRectangleRounded({135, 92, 730, 430}, 0.05f, 12, Paper);
+    DrawRectangle(135, 92, 730, 12, Red);
+    DrawGameText(decision.title, 175, 122, 18, Red);
+    DrawGameText(decision.question, 175, 157, 19, Ink);
     if (balance < 0)
         DrawGameText(TextFormat("DEUDA $%d     AHORRO $%d     PUNTOS %d", -balance, savings, score),
-                 180, 219, 16, Muted);
+                 175, 195, 15, Muted);
     else
         DrawGameText(TextFormat("SALDO $%d     AHORRO $%d     PUNTOS %d", balance, savings, score),
-                 180, 219, 16, Muted);
+                 175, 195, 15, Muted);
 
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        const Rectangle optionBounds = {170, static_cast<float>(264 + i * 82), 660, 60};
+        const Rectangle optionBounds = {170, static_cast<float>(225 + i * 68), 660, 54};
         const bool hovered = CheckCollisionPointRec(GetMousePosition(), optionBounds);
-        const Color choiceColor = Color{231, 234, 224, 255};
+        const Color choiceColor = hovered ? Color{255, 237, 191, 255}
+                                          : Color{231, 234, 224, 255};
         DrawRectangleRounded(optionBounds, 0.15f, 8, choiceColor);
         if (hovered) DrawRectangleLinesEx(optionBounds, 3, DeepBlue);
-        DrawCircle(198, static_cast<int>(optionBounds.y + 30), 15, Blue);
-        DrawGameText(TextFormat("%d", i + 1), 193, static_cast<int>(optionBounds.y + 18), 17, White);
-        DrawGameText(decision.options[i], 232, static_cast<int>(optionBounds.y + 18), 18, Ink);
+        DrawCircle(198, static_cast<int>(optionBounds.y + 27), 14, Blue);
+        DrawGameText(TextFormat("%d", i + 1), 194, static_cast<int>(optionBounds.y + 16), 16, White);
+        DrawGameText(decision.options[i], 228, static_cast<int>(optionBounds.y + 16), 16, Ink);
     }
-    DrawGameText("Haz clic en una opcion o pulsa 1 / 2. La respuesta se aplica al instante.",
-             180, 438, 15, Muted);
+    DrawGameText("Elige 1, 2 o 3. Algunas ofertas esconden cargos o riesgos.",
+                 175, 445, 15, Muted);
 }
 
 void DrawFeedback(int index, int choice, int balanceChange, int savingsChange)
@@ -715,7 +750,10 @@ void DrawFeedback(int index, int choice, int balanceChange, int savingsChange)
                         balanceChange < 0 ? "-" : "+", std::abs(balanceChange),
                         savingsChange < 0 ? "-" : "+", std::abs(savingsChange)),
              220, 304, 16, DeepBlue);
-    if (risky)
+    if (decision.losesLife[choice])
+        DrawGameText("La trampa costo una vida, $2.000 y 18 segundos.",
+                     220, 340, 15, Red);
+    else if (risky)
         DrawGameText("Aparecio una factura perseguidora. Salta o usa una semilla.",
                  220, 340, 15, Red);
     DrawGameText("Presiona ENTER para seguir la ruta", 220, 385, 16, Muted);
@@ -1368,12 +1406,13 @@ int main()
         {
             if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_KP_1)) selectedOption = 0;
             if (IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_KP_2)) selectedOption = 1;
+            if (IsKeyPressed(KEY_THREE) || IsKeyPressed(KEY_KP_3)) selectedOption = 2;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 const Vector2 mouse = GetMousePosition();
-                for (int i = 0; i < 2; ++i)
+                for (int i = 0; i < 3; ++i)
                 {
-                    const Rectangle optionBounds = {170, static_cast<float>(264 + i * 82), 660, 60};
+                    const Rectangle optionBounds = {170, static_cast<float>(225 + i * 68), 660, 54};
                     if (CheckCollisionPointRec(mouse, optionBounds))
                     {
                         selectedOption = i;
@@ -1400,8 +1439,6 @@ int main()
                     balance += decision.balanceChange[selectedOption];
                     savings += savingsChange;
                 }
-                lastBalanceChange = balance - oldBalance;
-                lastSavingsChange = savings - oldSavings;
                 score = std::max(0, score + (decision.risky[selectedOption] ? -250 : 250));
                 if (balance + savings <= 0)
                 {
@@ -1409,16 +1446,29 @@ int main()
                     screen = Screen::GameOver;
                     saveRecord();
                 }
-                else if (decision.risky[selectedOption])
+                else
                 {
-                    const float enemyX = std::min(player.x + 240.0f, WorldWidth - 100.0f);
-                    enemies.push_back({{enemyX, GroundY - 30, 34, 30},
-                                       enemyX - 60, enemyX + 100,
-                                       -110.0f * Difficulties[selectedDifficulty].enemySpeed,
-                                       true});
+                    if (decision.losesLife[selectedOption])
+                    {
+                        loseLife();
+                    }
+                    else if (decision.risky[selectedOption])
+                    {
+                        const float enemyX = std::min(player.x + 240.0f, WorldWidth - 100.0f);
+                        enemies.push_back({{enemyX, GroundY - 30, 34, 30},
+                                           enemyX - 60, enemyX + 100,
+                                           -110.0f * Difficulties[selectedDifficulty].enemySpeed,
+                                           true});
+                    }
+                    if (screen != Screen::GameOver)
+                    {
+                        lastBalanceChange = balance - oldBalance;
+                        lastSavingsChange = savings - oldSavings;
+                        screen = Screen::Feedback;
+                    }
                 }
-                if (!bankrupt) screen = Screen::Feedback;
-                playSound(decision.risky[selectedOption] ? hitSound : pickupSound);
+                if (!decision.losesLife[selectedOption])
+                    playSound(decision.risky[selectedOption] ? hitSound : pickupSound);
             }
         }
         else if (screen == Screen::Feedback && IsKeyPressed(KEY_ENTER))
@@ -1507,23 +1557,33 @@ int main()
             DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color{17, 30, 53, 120});
             DrawRectangleRounded({120, 92, 760, 440}, 0.05f, 14, Paper);
             DrawRectangle(120, 92, 760, 14, Red);
-            DrawGameText("AVENTURA DE PLATAFORMAS / FINANZAS PERSONALES", 165, 128, 16, Red);
+            DrawGameText("UNA AVENTURA DE PLATAFORMAS Y FINANZAS", 165, 128, 16, Red);
             DrawGameText("Ruta del", 165, 166, 48, DeepBlue);
             DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
-            DrawGameText("Tres niveles, nueve decisiones y consecuencias reales.", 165, 283, 19, Ink);
-            DrawGameText("Frutas, cuotas trampa, enemigos y una meta final.", 165, 317, 16, Muted);
-            DrawGameText("ELIGE UNA DIFICULTAD PARA EMPEZAR", 165, 350, 14, Red);
+            DrawGameText("15 retos aleatorios con tres opciones cada uno.", 165, 283, 19, Ink);
+            DrawGameText("Cuidado: hay cargos ocultos, fraudes y trampas.", 165, 317, 16, Muted);
+            DrawGameText("ELIGE TU MODO DE AVENTURA", 165, 350, 14, Red);
+            DrawCircle(770, 218, 48, Color{255, 197, 66, 100});
+            DrawCircle(770, 218, 34, Gold);
+            DrawGameText("$", 762, 202, 25, DeepBlue);
+            DrawPlayer({728, 258, PlayerWidth, PlayerHeight}, true, 0, false);
+            DrawGameText("15 RETOS", 716, 330, 14, DeepBlue);
             const float difficultyCardWidth = 210.0f;
             for (int i = 0; i < static_cast<int>(std::size(Difficulties)); ++i)
             {
                 const float x = 165.0f + i * (difficultyCardWidth + 12.0f);
-                DrawRectangleRounded({x, 374, difficultyCardWidth, 38}, 0.16f, 7,
+                const Rectangle bounds = {x, 374, difficultyCardWidth, 38};
+                DrawRectangleRounded(bounds, 0.16f, 7,
                                      i == selectedDifficulty ? DeepBlue : Color{231, 234, 224, 255});
+                if (i == selectedDifficulty)
+                    DrawRectangleRoundedLinesEx(bounds, 0.16f, 7, 3, Gold);
                 DrawGameText(TextFormat("%d  %s  /  JUGAR", i + 1, Difficulties[i].name),
                          static_cast<int>(x + 16), 385, 15,
                          i == selectedDifficulty ? White : Ink);
             }
-            DrawGameText(Difficulties[selectedDifficulty].description, 165, 420, 14, Muted);
+            DrawGameText(TextFormat("%s%s", selectedDifficulty == 1 ? "MODO AVENTURA / " : "",
+                                    Difficulties[selectedDifficulty].description),
+                         165, 420, 14, Muted);
             DrawRectangleRounded({165, 443, 248, 42}, 0.15f, 8, Red);
             DrawGameText("JUGAR  /  ESPACIO", 184, 456, 15, White);
             DrawGameText("A/D mover  ESPACIO saltar y golpear frutas  ABAJO bajar  W/S escalar",

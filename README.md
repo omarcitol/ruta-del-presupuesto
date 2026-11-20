@@ -9,11 +9,11 @@ commercial game franchises.
 Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
 and Mercado de las metas. Each stage has its own palette, platform routes,
 enemies, and financial lesson. Jump across gaps, climb ladders, collect coins,
-and face nine financial decisions. The three questions in each stage and the
-order of their answers are randomized; answer choices do not reveal which is
-safer. Feedback explains hidden fees, debt, and trade-offs, while a risky
-choice costs money and brings a pursuer. Coins are worth $250, so careful
-choices matter more than collecting every coin.
+and face 15 randomized financial decisions, five per stage. Every decision
+offers three choices; their order is randomized each run. Some hide fees or
+scams, and a few traps can cost a life as well as money. Feedback explains the
+consequences. Coins are worth $250, so careful choices matter more than
+collecting every coin.
 
 Debt enemies throw bills, later-stage enemies jump and toss arcing projectiles,
 and cannons fire money shots. Dodge them by jumping or stomp enemies from
@@ -42,7 +42,7 @@ All money in the game is fictional.
 - Move: `A`/`D` or the left/right arrows
 - Jump: `Space`, `W`, or the up arrow
 - Climb: hold `W`/`S` or the up/down arrows while on a ladder
-- Choose a financial decision: click an option or press `1`/`2` (applies immediately)
+- Choose a financial decision: click an option or press `1`-`3` (applies immediately)
 - Shoot a savings seed: `X` (after collecting one)
 - Hit a marked block from below: jump into it
 - Drop through a platform: `Down` while standing on it
