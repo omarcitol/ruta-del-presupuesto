@@ -25,8 +25,8 @@ constexpr float VaultX = WorldWidth - 180.0f;
 constexpr float PlayerWidth = 34.0f;
 constexpr float PlayerHeight = 48.0f;
 constexpr int LevelCount = 3;
-constexpr int DecisionsPerStage = 5;
-constexpr int DecisionCount = LevelCount * DecisionsPerStage;
+constexpr int DecisionPoolPerStage = 5;
+constexpr int DecisionCount = LevelCount;
 
 const Color DeepBlue = {26, 42, 75, 255};
 const Color NightBlue = {24, 37, 64, 255};
@@ -172,7 +172,7 @@ const char *const StageLessons[LevelCount] = {
     "Prepara un fondo y protege tu meta."
 };
 
-// Prepara los 15 retos y mezcla cada nivel y sus tres respuestas al iniciar la partida.
+// Elige un reto al azar de cada nivel y separa las preguntas unos 10 segundos de carrera.
 std::vector<Decision> MakeDecisions()
 {
     std::vector<Decision> decisions = {
@@ -237,23 +237,18 @@ std::vector<Decision> MakeDecisions()
          {"Separar ahorro y cubrir una necesidad mantiene el plan.", "El bono ayudo hoy, pero no quedo reserva.", "La inversion era una trampa: pierdes una vida y dinero."},
          {500, 0, 1400}, {1500, 0, 0}, {false, true, true}, {false, false, true}}
     };
-    const float positions[] = {
-        420, 650, 1080, 1420, 1760,
-        2220, 2520, 3010, 3350, 3710,
-        4220, 4580, 5040, 5420, 5630
-    };
+    const float positions[] = {450, 3150, 5700};
     std::mt19937 generator(static_cast<unsigned int>(GetRandomValue(1, 2147483647)));
-    // Se mezclan los retos dentro de cada nivel y luego sus opciones con sus consecuencias.
+    std::vector<Decision> selectedDecisions;
+    selectedDecisions.reserve(LevelCount);
     for (std::size_t stage = 0; stage < LevelCount; ++stage)
     {
         const auto first = decisions.begin() +
-            static_cast<std::ptrdiff_t>(stage * DecisionsPerStage);
-        std::shuffle(first, first + DecisionsPerStage, generator);
-    }
-    for (std::size_t i = 0; i < decisions.size(); ++i)
-    {
-        Decision &decision = decisions[i];
-        decision.x = positions[i];
+            static_cast<std::ptrdiff_t>(stage * DecisionPoolPerStage);
+        std::shuffle(first, first + DecisionPoolPerStage, generator);
+
+        Decision decision = *first;
+        decision.x = positions[stage];
         for (int option = 2; option > 0; --option)
         {
             const int other = std::uniform_int_distribution<int>(0, option)(generator);
@@ -264,8 +259,9 @@ std::vector<Decision> MakeDecisions()
             std::swap(decision.risky[option], decision.risky[other]);
             std::swap(decision.losesLife[option], decision.losesLife[other]);
         }
+        selectedDecisions.push_back(decision);
     }
-    return decisions;
+    return selectedDecisions;
 }
 
 std::vector<Decision> Decisions;
@@ -1544,8 +1540,8 @@ int main()
             DrawGameText("UNA AVENTURA DE PLATAFORMAS Y FINANZAS", 165, 128, 16, Red);
             DrawGameText("Ruta del", 165, 166, 48, DeepBlue);
             DrawGameText("presupuesto", 165, 215, 48, DeepBlue);
-            DrawGameText("15 retos aleatorios con tres opciones cada uno.", 165, 283, 19, Ink);
-            DrawGameText("Cuidado: hay cargos ocultos, fraudes y trampas.", 165, 317, 16, Muted);
+            DrawGameText("3 preguntas: una por nivel.", 165, 283, 19, Ink);
+            DrawGameText("Cada nivel elige al azar entre cinco retos.", 165, 317, 16, Muted);
             DrawGameText("MODO AVENTURA", 165, 350, 14, Red);
             DrawCircle(770, 218, 48, Color{255, 197, 66, 100});
             DrawCircle(770, 218, 34, Gold);

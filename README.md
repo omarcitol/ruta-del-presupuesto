@@ -9,11 +9,13 @@ commercial game franchises.
 Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
 and Mercado de las metas. Each stage has its own palette, platform routes,
 enemies, and financial lesson. Jump across gaps, climb ladders, collect coins,
-and face 15 randomized financial decisions, five per stage. Every decision
-offers three choices; their order is randomized each run. Some hide fees or
-scams, and a few traps can cost a life as well as money. Feedback explains the
-consequences. Coins are worth $250, so careful choices matter more than
-collecting every coin.
+and face three financial decisions, one per stage. Each run randomly draws
+each decision from a pool of five stage-specific scenarios, for 15 possible
+scenarios overall. The three choices are also shuffled, and questions are
+spaced roughly 10 seconds of running apart. Some hide fees or scams, and a few
+traps can cost a life as well as money. Feedback explains the consequences.
+Coins are worth $250, so careful choices matter more than collecting every
+coin.
 
 Debt enemies throw bills, later-stage enemies jump and toss arcing projectiles,
 and cannons fire money shots. Dodge them by jumping or stomp enemies from
