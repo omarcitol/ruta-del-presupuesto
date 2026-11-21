@@ -1,88 +1,66 @@
 # Ruta del presupuesto
 
-A 2D financial-literacy platform game made with C++ and raylib. The original
-prototype uses geometric pixel-inspired art and does not rely on assets from
-commercial game franchises.
+Videojuego educativo de plataformas creado con C++ y raylib. El jugador
+practica decisiones de ahorro y presupuesto mientras recorre tres niveles.
 
-## Project links
+## Entrega
 
-- Play the published game: <https://omarcitol.github.io/ruta-del-presupuesto/>
-- Read the project presentation: [PDF](docs/Presentacion_Ruta_del_Presupuesto.pdf)
+- **Jugar en el navegador:** <https://omarcitol.github.io/ruta-del-presupuesto/>
+- **Presentación del proyecto:** [PDF](docs/Presentacion_Ruta_del_Presupuesto.pdf)
+- **Valorar el juego:** [formulario anónimo de 1 a 5](https://docs.google.com/forms/d/e/1FAIpQLSet3XlT92RFc84tNnBzcfdrSUlO59xzuR6hC3hPIj2D5Brbag/viewform)
 
-## Gameplay
+## Cómo se juega
 
-Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
-and Mercado de las metas. Each stage has its own palette, platform routes,
-enemies, and financial lesson. Jump across gaps, climb ladders, collect coins,
-and face three financial decisions, one per stage. Each run randomly draws
-each decision from a pool of five stage-specific scenarios, for 15 possible
-scenarios overall. The three choices are also shuffled, and questions are
-spaced roughly 10 seconds of running apart. Some hide fees or scams, and a few
-traps can cost a life as well as money. Feedback explains the consequences.
-Coins are worth $250, so careful choices matter more than collecting every
-coin.
+La partida tiene tres niveles y un único modo, **Aventura**: 180 segundos y
+tres vidas. En cada nivel aparece una pregunta; las tres preguntas se eligen
+al azar de un banco de 15 situaciones (cinco por nivel). Cada una ofrece tres
+opciones en orden aleatorio y las señales se separan aproximadamente diez
+segundos de carrera. Algunas decisiones esconden cargos o estafas, y ciertas
+trampas pueden costar dinero, tiempo y una vida.
 
-Debt enemies throw bills, later-stage enemies jump and toss arcing projectiles,
-and cannons fire money shots. Dodge them by jumping or stomp enemies from
-above. Your savings seeds can shoot enemies with `X`; shots and hazards stop at
-stage boundaries. Jump into fruit blocks from below to release seeds. Press
-`Down` while standing on a platform to drop through it. Each hit costs one
-life, $2,000, and 18 seconds. Reach the vault at the end of the final stage to
-complete the run and rate the game; running out of lives or money ends the run.
+Recoge monedas, escala, salta los huecos y esquiva o derrota a los enemigos.
+Las semillas de ahorro permiten disparar con `X`; golpea los bloques marcados
+desde abajo para obtener semillas. Al llegar a la bóveda final se completa la
+partida y se solicita una valoración. Si se pierden todas las vidas o se acaba
+el tiempo, también se puede valorar al terminar.
 
-The game has one fixed mode: Aventura, with 180 seconds and three starting
-lives. Enemies get faster in each stage. A hit costs 250 points and 18 seconds,
-and losing all lives or running out of time ends the run. Press `P` to pause.
+El saldo y el ahorro son ficticios. El récord y las valoraciones se guardan
+localmente; la versión web también envía las calificaciones anónimas al
+formulario enlazado arriba.
 
-The score rewards careful choices, coins, enemy encounters, and remaining time.
-Collected coins add to the available balance; setting money aside changes the
-savings total, so the same money is not counted twice. Spending beyond the
-available balance is shown as debt. After winning or losing, players can rate
-the experience from 1 to 5 upon reaching the vault, or after a loss; press `Enter`
-to skip. The best score and anonymous ratings are stored locally on the device;
-the browser version also submits ratings anonymously to the linked Google Form.
-All money in the game is fictional.
+## Controles
 
-## Controls
+- Mover: `A`/`D` o flechas izquierda/derecha.
+- Saltar: `Espacio`, `W` o flecha arriba.
+- Escalar: mantener `W`/`S` o flechas arriba/abajo en una escalera.
+- Elegir una decisión: hacer clic en una opción o pulsar `1`, `2` o `3`.
+- Disparar una semilla: `X`, después de recoger una.
+- Atravesar una plataforma hacia abajo: `Abajo` mientras se está sobre ella.
+- Pausar o continuar: `P`.
+- Iniciar Aventura: hacer clic en `JUGAR`, pulsar `Espacio` o `Enter`.
+- Silenciar o activar el sonido: `M`.
+- Cerrar el juego: `Esc`.
 
-- Move: `A`/`D` or the left/right arrows
-- Jump: `Space`, `W`, or the up arrow
-- Climb: hold `W`/`S` or the up/down arrows while on a ladder
-- Choose a financial decision: click an option or press `1`-`3` (applies immediately)
-- Shoot a savings seed: `X` (after collecting one)
-- Hit a marked block from below: jump into it
-- Drop through a platform: `Down` while standing on it
-- Pause/resume: `P`
-- Continue: `Enter`
-- Start Aventura: click `JUGAR`, press `Space`, or press `Enter`
-- Toggle sound: `M`
-- Close the game: `Esc`
+## Ejecutar en Windows
 
-## Run on Windows
-
-Build the executable from source using the instructions below, then run
-`build\ruta-del-presupuesto.exe`. The game draws its visuals and synthesizes
-its sound effects at runtime, so it does not need external art or audio files.
-
-## Build on Windows
-
-Requirements: MinGW-w64 with `g++` and GNU Make (or `mingw32-make`), plus the
-raylib 5.5 source tree. Set `RAYLIB_DIR` to the root of that tree, then run:
+Compila el juego con MinGW-w64, GNU Make (o `mingw32-make`) y raylib 5.5.
+Define `RAYLIB_DIR` con la ruta a la carpeta de raylib y ejecuta:
 
 ```bat
-set RAYLIB_DIR=C:\path\to\raylib-5.5
+set RAYLIB_DIR=C:\ruta\a\raylib-5.5
 build.bat
 ```
 
-## Play in the browser
+El ejecutable se genera en `build\ruta-del-presupuesto.exe`. El directorio
+`build/` está excluido de Git porque contiene archivos compilados y datos
+locales; no hace falta subirlo al repositorio.
 
-Play at <https://omarcitol.github.io/ruta-del-presupuesto/>. Click the
-Aventura card or `JUGAR`, or press `Space`/`Enter` to start. Decision cards
-also respond to a click, so no extra
-confirmation key is needed. The web version uses a readable font and a clean,
-responsive full-screen page.
+## Versión web
 
-GitHub Actions builds the WebAssembly version with raylib 5.5 and Emscripten
-3.1.64, then deploys it to GitHub Pages after pushes to `main`. For a local
-build, `build-web.bat` is available; serve the resulting `build\web` directory
-over HTTP rather than opening its HTML file directly.
+La demo publicada está en <https://omarcitol.github.io/ruta-del-presupuesto/>.
+GitHub Actions compila el juego con raylib 5.5 y Emscripten 3.1.64 y lo
+despliega en GitHub Pages al actualizar la rama `main`.
+
+Para compilar localmente, configura `RAYLIB_DIR` y ejecuta `build-web.bat`.
+Sirve el contenido de `build\web` por HTTP; no abras el archivo HTML
+directamente desde el disco.
