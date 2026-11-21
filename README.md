@@ -7,7 +7,6 @@ practica decisiones de ahorro y presupuesto mientras recorre tres niveles.
 
 - **Jugar en el navegador:** <https://omarcitol.github.io/ruta-del-presupuesto/>
 - **Descargar para Windows:** [ruta-del-presupuesto.exe](https://github.com/omarcitol/ruta-del-presupuesto/releases/download/v1.0.1/ruta-del-presupuesto.exe)
-- **Presentación del proyecto:** [PDF](docs/Presentacion_Ruta_del_Presupuesto.pdf)
 - **Valorar el juego:** [formulario anónimo de 1 a 5](https://docs.google.com/forms/d/e/1FAIpQLSet3XlT92RFc84tNnBzcfdrSUlO59xzuR6hC3hPIj2D5Brbag/viewform)
 
 ## Cómo se juega
