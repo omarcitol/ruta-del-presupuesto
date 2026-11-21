@@ -4,6 +4,11 @@ A 2D financial-literacy platform game made with C++ and raylib. The original
 prototype uses geometric pixel-inspired art and does not rely on assets from
 commercial game franchises.
 
+## Project links
+
+- Play the published game: <https://omarcitol.github.io/ruta-del-presupuesto/>
+- Read the project presentation: [PDF](docs/Presentacion_Ruta_del_Presupuesto.pdf)
+
 ## Gameplay
 
 Explore three distinct stages: the Barrio del ahorro, Avenida de las cuotas,
